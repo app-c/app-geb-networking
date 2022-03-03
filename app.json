@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "geb-training",
+    "slug": "geb-training",
+    "version": "1.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  }
+}
