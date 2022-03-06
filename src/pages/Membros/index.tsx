@@ -10,13 +10,14 @@ import store, {
 } from "firebase/firestore";
 import { Form } from "@unform/mobile";
 import { HeaderContaponent } from "../../components/HeaderComponent";
-import { Container, Flat } from "./styles";
+import { Container } from "./styles";
 import { MembrosComponents } from "../../components/MembrosCompornents";
 import { useAuth } from "../../hooks/AuthContext";
 import { IUserDto } from "../../DtosUser";
 import { Box } from "../FindMembro/styles";
 import { InputCasdastro } from "../../components/InputsCadastro";
 import { colecao } from "../../collection";
+import { Loading } from "../../components/Loading";
 
 export function Membros() {
   const { navigate } = useNavigation();
@@ -27,6 +28,7 @@ export function Membros() {
   const [membros, setMembros] = useState<IUserDto[]>([]);
   const [value, setValue] = useState("");
   const [lista, setLista] = useState<IUserDto[]>([]);
+  const [load, setLoad] = useState(true);
 
   const hanldeTransaction = useCallback(
     (
@@ -54,6 +56,7 @@ export function Membros() {
       });
 
       setMembros(user);
+      setLoad(false);
     });
     return () => load();
   }, []);
@@ -71,48 +74,54 @@ export function Membros() {
   }, [membros, value]);
 
   return (
-    <Container>
-      <HeaderContaponent type="tipo1" onMessage="of" title="MEMBROS" />
+    <>
+      {load ? (
+        <Loading />
+      ) : (
+        <Container>
+          <HeaderContaponent type="tipo1" onMessage="of" title="MEMBROS" />
 
-      <Form>
-        <Box>
-          <InputCasdastro
-            name="find"
-            icon="search"
-            type="custom"
-            options={{ mask: "****************************" }}
-            onChangeText={text => setValue(text)}
-            value={value}
-          />
-        </Box>
-      </Form>
-
-      <View style={{ paddingBottom: RFPercentage(20) }}>
-        <FlatList
-          data={lista}
-          keyExtractor={h => h.id}
-          renderItem={({ item: h }) => (
-            <>
-              <MembrosComponents
-                icon="necociar"
-                pres={() =>
-                  hanldeTransaction(
-                    h.id,
-                    h.avatarUrl,
-                    h.logoUrl,
-                    h.nome,
-                    h.workName,
-                  )
-                }
-                userName={h.nome}
-                user_avatar={h.avatarUrl}
-                oficio={h.workName}
-                imageOfice={h.logoUrl}
+          <Form>
+            <Box>
+              <InputCasdastro
+                name="find"
+                icon="search"
+                type="custom"
+                options={{ mask: "****************************" }}
+                onChangeText={text => setValue(text)}
+                value={value}
               />
-            </>
-          )}
-        />
-      </View>
-    </Container>
+            </Box>
+          </Form>
+
+          <View style={{ paddingBottom: RFPercentage(20) }}>
+            <FlatList
+              data={lista}
+              keyExtractor={h => h.id}
+              renderItem={({ item: h }) => (
+                <>
+                  <MembrosComponents
+                    icon="necociar"
+                    pres={() =>
+                      hanldeTransaction(
+                        h.id,
+                        h.avatarUrl,
+                        h.logoUrl,
+                        h.nome,
+                        h.workName,
+                      )
+                    }
+                    userName={h.nome}
+                    user_avatar={h.avatarUrl}
+                    oficio={h.workName}
+                    imageOfice={h.logoUrl}
+                  />
+                </>
+              )}
+            />
+          </View>
+        </Container>
+      )}
+    </>
   );
 }

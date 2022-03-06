@@ -11,7 +11,10 @@ import {
   Roboto_400Regular,
   Roboto_900Black,
 } from "@expo-google-fonts/roboto";
-import { Comfortaa_400Regular } from "@expo-google-fonts/comfortaa";
+import {
+  Comfortaa_400Regular,
+  Comfortaa_500Medium,
+} from "@expo-google-fonts/comfortaa";
 import {
   BarlowCondensed_400Regular,
   BarlowCondensed_600SemiBold,
@@ -32,6 +35,7 @@ export default function App() {
     Roboto_400Regular,
     Roboto_900Black,
     Comfortaa_400Regular,
+    Comfortaa_500Medium,
     BarlowCondensed_400Regular,
     BarlowCondensed_600SemiBold,
     BarlowCondensed_300Light,

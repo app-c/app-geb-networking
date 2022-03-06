@@ -1,7 +1,12 @@
 /* eslint-disable camelcase */
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, FlatList, View } from "react-native";
-import store from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  getFirestore,
+  onSnapshot,
+} from "firebase/firestore";
 import { Modalize } from "react-native-modalize";
 import { date } from "yup/lib/locale";
 import { format } from "date-fns";
@@ -24,11 +29,15 @@ import { MembrosComponents } from "../../components/MembrosCompornents";
 import { useAuth } from "../../hooks/AuthContext";
 import { Box } from "../FindMembro/styles";
 import { InputCasdastro } from "../../components/InputsCadastro";
+import { colecao } from "../../collection";
 
 export function Indicaçoes() {
   const { user } = useAuth();
   const refModal = useRef<Modalize>(null);
   const { navigate } = useNavigation();
+  const db = getFirestore();
+  const colectUsers = collection(db, colecao.users);
+  const colectOrderIndication = collection(db, colecao.orderIndication);
 
   const [users, setUsers] = useState<IUserDto[]>([]);
   const [descricao, setDescricao] = useState("");
@@ -40,12 +49,10 @@ export function Indicaçoes() {
   const [lista, setLista] = useState<IUserDto[]>([]);
 
   useEffect(() => {
-    const load = store()
-      .collection("users")
-      .onSnapshot(h => {
-        const user = h.docs.map(p => p.data() as IUserDto);
-        setUsers(user);
-      });
+    const load = onSnapshot(colectUsers, h => {
+      const user = h.docs.map(p => p.data() as IUserDto);
+      setUsers(user);
+    });
 
     return () => load();
   }, []);
@@ -58,18 +65,16 @@ export function Indicaçoes() {
 
   const handleOrderIndicaçao = useCallback(() => {
     refModal.current.close();
-    store()
-      .collection("order_indication")
-      .add({
-        userId,
-        quemIndicou: user.id,
-        quemIndicouName: user.nome,
-        quemIndicouWorkName: user.workName,
-        nomeCliente,
-        telefoneCliente,
-        descricao,
-        createdAt: format(new Date(Date.now()), "dd-MM-yy-HH-mm"),
-      });
+    addDoc(colectOrderIndication, {
+      userId,
+      quemIndicou: user.id,
+      quemIndicouName: user.nome,
+      quemIndicouWorkName: user.workName,
+      nomeCliente,
+      telefoneCliente,
+      descricao,
+      createdAt: format(new Date(Date.now()), "dd-MM-yy-HH-mm"),
+    });
 
     Alert.alert("Indicação", `Aguarde a validação da ${work}`, [
       {

@@ -10,7 +10,7 @@ import {
   useNavigation,
   useRoute,
 } from "@react-navigation/native";
-import store from "firebase/firestore";
+import store, { addDoc, collection, getFirestore } from "firebase/firestore";
 import AppLoading from "expo-app-loading";
 import {
   Avatar,
@@ -33,6 +33,7 @@ import { useAuth } from "../../hooks/AuthContext";
 import { IUserDto } from "../../DtosUser";
 import { HeaderContaponent } from "../../components/HeaderComponent";
 import { Loading } from "../../components/Loading";
+import { colecao } from "../../collection";
 
 interface IRoute {
   prestador_id: string;
@@ -56,6 +57,9 @@ export function Transaction() {
   const [description, setDescription] = useState("");
   const [mon, setMon] = useState(0);
 
+  const db = getFirestore();
+  const colect = collection(db, colecao.orderTransaction);
+
   const navigateToOk = useCallback(async () => {
     if (mon === 0) {
       Alert.alert("Transação", "informe o valor que foi consumido");
@@ -69,17 +73,14 @@ export function Transaction() {
 
     const { nome, workName } = user;
 
-    store()
-      .collection("order_transaction")
-      .add({
-        prestador_id,
-        consumidor: user.id,
-        valor: String(mon),
-        description,
-        nome: user.nome,
-        data: new Date(Date.now()),
-      })
-      .catch(err => console.log(err));
+    addDoc(colect, {
+      prestador_id,
+      consumidor: user.id,
+      valor: String(mon),
+      description,
+      nome: user.nome,
+      data: new Date(Date.now()),
+    }).catch(err => console.log(err));
 
     navigate("sucess", { workName, description, nome });
   }, [description, mon, navigate, prestador_id, user]);

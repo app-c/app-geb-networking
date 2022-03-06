@@ -1,6 +1,14 @@
 import React, { useCallback, useRef, useState } from "react";
 import { Alert, View } from "react-native";
-import store from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getFirestore,
+  updateDoc,
+} from "firebase/firestore";
 import { format } from "date-fns";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { HeaderContaponent } from "../../components/HeaderComponent";
@@ -18,6 +26,7 @@ import { useAuth } from "../../hooks/AuthContext";
 import { InputText } from "../Transaction/styles";
 import { OrderNavigationIndication } from "../../@types/navigation";
 import { IUserDto } from "../../DtosUser";
+import { colecao } from "../../collection";
 
 export function Indication() {
   const { user } = useAuth();
@@ -27,6 +36,12 @@ export function Indication() {
   const [description, setDescription] = useState("");
   const [valor, setValor] = useState("");
 
+  const db = getFirestore();
+  const colectUsers = collection(db, colecao.users);
+  const colectOrderSucess = collection(db, "sucess_indication");
+  const colectTransaction = collection(db, colecao.transaction);
+  const colectOrderIndicarion = collection(db, colecao.orderIndication);
+
   const handleFecharNegocio = useCallback(() => {
     if (!description) {
       return Alert.alert("Transação", "Falta a descrição");
@@ -35,29 +50,24 @@ export function Indication() {
     if (!valor || valor === "0.00") {
       return Alert.alert("Transação", "Falta o valor");
     }
-    store()
-      .collection("transaction")
-      .add({
-        prestador_id: user.id,
-        descricao: description,
-        type: "entrada",
-        valor,
-        createdAt: format(new Date(Date.now()), "dd-MM-yyy-HH-mm"),
-      })
+    addDoc(colectTransaction, {
+      prestador_id: user.id,
+      descricao: description,
+      type: "entrada",
+      valor,
+      createdAt: format(new Date(Date.now()), "dd-MM-yyy-HH-mm"),
+    })
       .then(() => {
-        store().collection("order_indication").doc(id).delete();
-        store()
-          .collection("users")
-          .doc(quemIndicou)
-          .get()
+        const ref = doc(colectOrderIndicarion, id);
+        const refUser = doc(colectUsers, quemIndicou);
+        deleteDoc(ref);
+
+        getDoc(refUser)
           .then(h => {
             let { indicacao } = h.data() as IUserDto;
-            store()
-              .collection("users")
-              .doc(quemIndicou)
-              .update({
-                indicacao: (indicacao += 1),
-              });
+            updateDoc(refUser, {
+              indicacao: (indicacao += 1),
+            });
           })
           .catch(err =>
             Alert.alert("Algo deu errado", "dados do usuário nao recuperado"),

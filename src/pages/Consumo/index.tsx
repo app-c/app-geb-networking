@@ -4,14 +4,16 @@
 /* eslint-disable import/prefer-default-export */
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, ScrollView, TextInput, View } from "react-native";
-import { getDate } from "date-fns/esm";
 import { format, getMonth, getYear } from "date-fns";
 
 import { useFocusEffect } from "@react-navigation/native";
-import store from "firebase/firestore";
+import store, {
+  collection,
+  getDocs,
+  getFirestore,
+  onSnapshot,
+} from "firebase/firestore";
 import {
-  Box,
-  BoxData,
   BoxFiltros,
   BoxFiltroTouch,
   BoxTotal,
@@ -29,6 +31,7 @@ import { useAuth } from "../../hooks/AuthContext";
 import { locale } from "../../utils/LocalStrigMoney";
 import { IUserDto } from "../../DtosUser";
 import theme from "../../global/styles/theme";
+import { colecao } from "../../collection";
 
 export interface PropTransactions {
   id: string;
@@ -82,26 +85,25 @@ export function Consumo() {
 
   const { user } = useAuth();
 
+  const db = getFirestore();
+  const colectTransaction = collection(db, colecao.transaction);
+  const colectUsers = collection(db, colecao.users);
+  const colectPresenca = collection(db, colecao.presenca);
+
   // const handlePresType = useCallback(() => {}, []);
 
-  const transaction = useCallback(() => {
-    store()
-      .collection("transaction")
-      .get()
-      .then(p => {
-        const cons = p.docs.map(h => {
-          return {
-            id: h.id,
-            ...h.data(),
-          } as PropTransactions;
-        });
-        setResponse(cons);
+  useEffect(() => {
+    const load = onSnapshot(colectTransaction, p => {
+      const cons = p.docs.map(h => {
+        return {
+          id: h.id,
+          ...h.data(),
+        } as PropTransactions;
       });
+      setResponse(cons);
+    });
+    return () => load();
   }, []);
-
-  React.useEffect(() => {
-    transaction();
-  }, [transaction]);
 
   const Prestador = useMemo(() => {
     return response.filter(h => {
@@ -218,69 +220,60 @@ export function Consumo() {
   }, [formatedConsumidor]);
 
   const QntGeral = useCallback(async () => {
-    store()
-      .collection("users")
-      .get()
-      .then(res => {
-        const users = res.docs.map(h => {
-          return h.data() as IUserDto;
-        });
-
-        store()
-          .collection("presença")
-          .get()
-          .then(res => {
-            const data = res.docs
-              .map(h => h.data())
-              .filter(p => p.user_id === user.id && p.presenca === true);
-
-            const resP = res.docs
-              .map(h => h.data())
-              .filter(p => p.user_id === user.id);
-
-            setPresenca(
-              resP.map(h => {
-                return {
-                  nome: h.nome,
-                  data: format(new Date(h.createdAt), "dd/MM/yyyy - HH:mm"),
-                  status: h.presenca ? "validado" : "pendente",
-                };
-              }),
-            );
-
-            const filter = users.map(h => {
-              const p = data.length + 2;
-              return {
-                qntPadrinho: h.padrinhQuantity,
-                qntPresenca: p,
-                qntIndicacao: h.indicacao,
-                user_id: h.id,
-              };
-            });
-
-            setQntGeral(filter);
-          });
+    getDocs(colectUsers).then(res => {
+      const users = res.docs.map(h => {
+        return h.data() as IUserDto;
       });
-  }, []);
 
-  useEffect(() => {
-    store()
-      .collection("users")
-      .get()
-      .then(h => {
-        const res = h.docs.map(p => p.data() as IUserDto);
+      getDocs(colectPresenca).then(res => {
+        const data = res.docs
+          .map(h => h.data())
+          .filter(p => p.user_id === user.id && p.presenca === true);
 
-        const formatedUser = res.map((h, i) => {
+        const resP = res.docs
+          .map(h => h.data())
+          .filter(p => p.user_id === user.id);
+
+        setPresenca(
+          resP.map(h => {
+            return {
+              nome: h.nome,
+              data: format(new Date(h.createdAt), "dd/MM/yyyy - HH:mm"),
+              status: h.presenca ? "validado" : "pendente",
+            };
+          }),
+        );
+
+        const filter = users.map(h => {
+          const p = data.length + 2;
           return {
-            id: h.id,
-            posicao: `${i + 1}º`,
-            qntPosicao: h.indicacao,
+            qntPadrinho: h.padrinhQuantity,
+            qntPresenca: p,
+            qntIndicacao: h.indicacao,
+            user_id: h.id,
           };
         });
 
-        const indication = formatedUser.find(h => h.id === user.id);
-        setIndicacao(indication);
+        setQntGeral(filter);
       });
+    });
+  }, []);
+
+  useEffect(() => {
+    getDocs(colectUsers).then(h => {
+      const res = h.docs.map(p => p.data() as IUserDto);
+
+      const formatedUser = res.map((h, i) => {
+        return {
+          id: h.id,
+          posicao: `${i + 1}º`,
+          qntPosicao: h.indicacao,
+        };
+      });
+
+      const indication = formatedUser.find(h => h.id === user.id);
+      setIndicacao(indication);
+    });
   }, [user.id]);
 
   const ranking = useMemo(() => {
@@ -294,8 +287,6 @@ export function Consumo() {
       QntGeral();
     }, [QntGeral]),
   );
-
-  console.log(presenca);
 
   return (
     <Container>

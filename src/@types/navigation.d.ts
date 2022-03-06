@@ -12,6 +12,12 @@ export type OrderNavigationIndication = {
   id: string;
 };
 
+type Sucess = {
+  workName: string;
+  nome: string;
+  description: string;
+};
+
 export declare global {
   namespace ReactNavigation {
     interface RootParamList {
@@ -34,6 +40,7 @@ export declare global {
       indication: OrderNavigationIndication;
       Transaction: TransactionNavigtionsProps;
       Post: undefined;
+      sucess: Sucess;
     }
   }
 }
