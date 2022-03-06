@@ -1,9 +1,9 @@
 /* eslint-disable react/style-prop-object */
 /* eslint-disable camelcase */
 import "./src/config";
-import "react-native-gesture-handler";
 import "intl";
 import "intl/locale-data/jsonp/pt-BR";
+import "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 import React from "react";
 import {
@@ -21,10 +21,11 @@ import AppLoading from "expo-app-loading";
 import { ThemeProvider } from "styled-components/native";
 
 import { NavigationContainer } from "@react-navigation/native";
+import { Text, View } from "react-native";
 import theme from "./src/global/styles/theme";
 import { SingIn } from "./src/pages/LogIn";
 import AppProvider from "./src/hooks";
-import { Route } from "./src/routes/index.routes";
+import { Route } from "./src/routes";
 
 export default function App() {
   const [loaded] = useFonts({
@@ -45,7 +46,9 @@ export default function App() {
       <ThemeProvider theme={theme}>
         <StatusBar style="light" hidden />
         <AppProvider>
-          <Route />
+          <View style={{ flex: 1 }}>
+            <SingIn />
+          </View>
         </AppProvider>
       </ThemeProvider>
     </NavigationContainer>

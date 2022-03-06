@@ -78,8 +78,6 @@ export const AuthProvider: React.FC = ({ children }) => {
 
         getDoc(docRef)
           .then(async profile => {
-            console.log(profile.data());
-
             const {
               nome,
               adm,
