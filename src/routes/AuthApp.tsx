@@ -25,22 +25,22 @@ export function AuthApp() {
       screenOptions={{ headerShown: false }}
     >
       <Stak.Screen name="Inicio" component={Inicio} />
-      {/* <Stak.Screen name="valide" component={Valide} /> */}
-      {/* <Stak.Screen name="perfil" component={Profile} /> */}
-      {/* <Stak.Screen name="home" component={TabBarApp} /> */}
-      {/* <Stak.Screen name="consumo" component={Consumo} /> */}
-      {/* <Stak.Screen name="negociar" component={StacKMembros} /> */}
-      {/* <Stak.Screen name="indicacao" component={Indicaçoes} /> */}
+      <Stak.Screen name="valide" component={Valide} />
+      <Stak.Screen name="perfil" component={Profile} />
+      <Stak.Screen name="home" component={TabBarApp} />
+      <Stak.Screen name="consumo" component={Consumo} />
+      <Stak.Screen name="negociar" component={StacKMembros} />
+      <Stak.Screen name="indicacao" component={Indicaçoes} />
 
-      {/* <Stak.Screen name="ranking" component={Ranking} /> */}
-      {/* <Stak.Screen name="user" component={SingUp} /> */}
-      {/* <Stak.Screen name="updateSenha" component={UpdateSenhaUser} /> */}
+      <Stak.Screen name="ranking" component={Ranking} />
+      <Stak.Screen name="user" component={SingUp} />
+      <Stak.Screen name="updateSenha" component={UpdateSenhaUser} />
       <Stak.Screen name="delete" component={DeletUser} />
       {/* <Stak.Screen name="push" component={Push} /> */}
-      {/* <Stak.Screen name="classificaçao" component={Classificaçao} /> */}
-      {/* <Stak.Screen name="findUser" component={FindUser} /> */}
-      {/* <Stak.Screen name="presenca" component={ListPresenca} /> */}
-      {/* <Stak.Screen name="indication" component={Indication} /> */}
+      <Stak.Screen name="classificaçao" component={Classificaçao} />
+      <Stak.Screen name="findUser" component={FindUser} />
+      <Stak.Screen name="presenca" component={ListPresenca} />
+      <Stak.Screen name="indication" component={Indication} />
     </Stak.Navigator>
   );
 }

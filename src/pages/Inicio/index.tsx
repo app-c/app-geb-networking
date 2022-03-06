@@ -200,8 +200,6 @@ export function Inicio() {
           return acc + Number(item.valor);
         }, 0);
 
-      console.log(res);
-
       const MontateAtual = res
         .filter(h => {
           const [dia, mes, ano, hora, min] = h.createdAt.split("-").map(Number);

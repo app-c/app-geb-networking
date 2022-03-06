@@ -47,7 +47,7 @@ export default function App() {
         <StatusBar style="light" hidden />
         <AppProvider>
           <View style={{ flex: 1 }}>
-            <SingIn />
+            <Route />
           </View>
         </AppProvider>
       </ThemeProvider>

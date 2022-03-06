@@ -33,6 +33,7 @@ export declare global {
       Inicio: undefined;
       indication: OrderNavigationIndication;
       Transaction: TransactionNavigtionsProps;
+      Post: undefined;
     }
   }
 }
