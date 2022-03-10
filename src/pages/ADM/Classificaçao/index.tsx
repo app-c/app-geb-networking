@@ -44,6 +44,7 @@ interface IPropsTransaction {
   consumidor_id?: string;
   type: string;
   valor: string;
+  ponto: number;
 }
 
 interface IQnt {
@@ -86,10 +87,15 @@ export function Ranking() {
     getDocs(colecaoTransaction).then(h => {
       const trans = h.docs
         .map(p => p.data() as IPropsTransaction)
-        .filter(h => h.type === "entrada");
+        .filter(h => h.type === "entrada")
+        .map(h => {
+          return {
+            ...h,
+            ponto: 10,
+          };
+        });
 
       setFindEntrada(trans);
-      setLoad(false);
     });
   }, []);
 
@@ -109,6 +115,10 @@ export function Ranking() {
         return acc + Number(item.valor);
       }, 0);
 
+      const pontos = filtroConsumo.reduce((acc, item) => {
+        return acc + Number(item.ponto);
+      }, 0);
+
       const total = Number(valor).toLocaleString("pt-BR", {
         style: "currency",
         currency: "BRL",
@@ -119,27 +129,30 @@ export function Ranking() {
         nome: user.nome,
         valor,
         total,
-        data: dataF || format(new Date(Date.now()), "dd-MM-yyyy-HH-mm"),
+        pontos,
+        data: dataF,
         workName: user.workName,
       };
-    }).sort((a, b) => Number(b.valor) - Number(a.valor));
+    })
+      .sort((a, b) => Number(b.pontos) - Number(a.pontos))
+      .filter(h => h.data !== undefined);
 
     const dataNowDia = new Date(Date.now()).getDate();
     const dataNowMes = new Date(Date.now()).getMonth() + 1;
     const dataNowAno = new Date(Date.now()).getFullYear();
     const dataNowHora = new Date(Date.now()).getHours();
     const dataNowMin = new Date(Date.now()).getMinutes();
+    const dataN = new Date(Date.now());
 
     const filterMes = data.filter(p => {
-      const [mes, dia, ano, hora, min] = p.data.split("-").map(Number);
+      const [dia, mes, ano] = p.data.split("-").map(Number);
       if (mes === dataNowMes) {
         return p;
       }
     });
 
     const filterAno = data.filter(p => {
-      const [mes, dia, ano, hora, min] = p.data.split("-").map(Number);
-      if (ano === dataNowAno) {
+      if (dataN.getFullYear() === dataNowAno) {
         return p;
       }
     });
@@ -173,8 +186,6 @@ export function Ranking() {
         };
       });
     }
-
-    setLoad(false);
   }, [Users, filtro, findEntrada]);
 
   // todo Saida ........................
@@ -183,32 +194,44 @@ export function Ranking() {
       const res = h.docs.map(p => {
         return p.data() as IUserDto;
       });
+
       setUsers(res);
     });
 
     onSnapshot(colecaoTransaction, h => {
       const trans = h.docs
         .map(p => p.data() as IPropsTransaction)
-        .filter(h => h.type === "saida");
+        .filter(h => h.type === "saida")
+        .map(h => {
+          return {
+            ...h,
+            ponto: 10,
+          };
+        });
 
       setFindSaida(trans);
     });
   }, []);
 
   const Saida = useMemo(() => {
-    const data = Users.map((user, i) => {
+    const data = Users.map((users, i) => {
       const filtroConsumo = findSaida.filter(h => {
-        if (h.consumidor_id === user.id) {
+        if (h.consumidor_id === users.id) {
           return h;
         }
       });
+      console.log(filtroConsumo);
 
-      const filtroData = filtroConsumo.find(h => h.consumidor_id === user.id)!;
+      const filtroData = filtroConsumo.find(h => h.prestador_id === users.id)!;
 
       const dataF = filtroData?.createdAt;
 
       const valor = filtroConsumo.reduce((acc, item) => {
         return acc + Number(item.valor);
+      }, 0);
+
+      const pontos = filtroConsumo.reduce((acc, item) => {
+        return acc + Number(item.ponto);
       }, 0);
 
       const total = Number(valor).toLocaleString("pt-BR", {
@@ -217,25 +240,68 @@ export function Ranking() {
       });
 
       return {
-        id: user.id,
-        nome: user.nome,
+        id: users.id,
+        nome: users.nome,
         valor,
         total,
+        pontos,
         data: dataF,
-        workName: user.workName,
+        workName: users.workName,
       };
-    }).sort((a, b) => Number(b.valor) - Number(a.valor));
+    })
+      .sort((a, b) => Number(b.pontos) - Number(a.pontos))
+      .filter(h => h.data !== undefined);
 
-    const po = data.map((h, i) => {
-      const po = i + 1;
-      return {
-        ...h,
-        posicao: `${po}º`,
-      };
+    const dataNowDia = new Date(Date.now()).getDate();
+    const dataNowMes = new Date(Date.now()).getMonth() + 1;
+    const dataNowAno = new Date(Date.now()).getFullYear();
+    const dataNowHora = new Date(Date.now()).getHours();
+    const dataNowMin = new Date(Date.now()).getMinutes();
+    const dataN = new Date(Date.now());
+
+    const filterMes = data.filter(p => {
+      const [dia, mes, ano] = p.data.split("-").map(Number);
+      if (mes === dataNowMes) {
+        return p;
+      }
     });
 
-    return po;
-  }, [Users, findSaida]);
+    const filterAno = data.filter(p => {
+      if (dataN.getFullYear() === dataNowAno) {
+        return p;
+      }
+    });
+
+    if (filtro === "mes") {
+      return filterMes.map((h, i) => {
+        const po = i + 1;
+        return {
+          ...h,
+          posicao: `${po}º`,
+        };
+      });
+    }
+
+    if (filtro === "ano") {
+      return filterAno.map((h, i) => {
+        const po = i + 1;
+        return {
+          ...h,
+          posicao: `${po}º`,
+        };
+      });
+    }
+
+    if (filtro === "todos") {
+      return data.map((h, i) => {
+        const po = i + 1;
+        return {
+          ...h,
+          posicao: `${po}º`,
+        };
+      });
+    }
+  }, [Users, filtro, findSaida]);
 
   // todo extrato entrada e saida ..................
   useEffect(() => {
@@ -333,6 +399,14 @@ export function Ranking() {
       };
     });
   }, [qntGeral]);
+
+  useEffect(() => {
+    setTimeout(() => {
+      if (Entrada && Saida) {
+        setLoad(false);
+      }
+    }, 1000);
+  }, [Entrada, Saida]);
 
   return (
     <Container>

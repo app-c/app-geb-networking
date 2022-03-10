@@ -17,6 +17,7 @@ import {
   Title,
 } from "./styles";
 import { colecao } from "../../collection";
+import { Loading } from "../../components/Loading";
 
 interface IResponse {
   id: string;
@@ -31,6 +32,7 @@ interface PropsEntrada {
   prestador_id: string;
   type: string;
   valor: string;
+  pontosEntrada: number;
 }
 
 interface PropsSaida {
@@ -39,12 +41,14 @@ interface PropsSaida {
   consumidor_id: string;
   type: string;
   valor: string;
+  pontosSaida: number;
 }
 
 interface IPresenca {
   padrinho: number;
   qntPresença: number;
   user_id: string;
+  pontosPresença: number;
 }
 
 interface IQnt {
@@ -52,13 +56,16 @@ interface IQnt {
   qntPresenca: number;
   qntIndicacao: number;
   user_id: string;
+  pontosPresença: number;
+  pontosPadrinho: number;
+  pontosIndicaçao: number;
 }
 
 export function Classificaçao() {
   const { user } = useAuth();
   const db = getFirestore();
-  const colectUsers = collection(db, colecao.users);
-  const colectTransaction = collection(db, colecao.transaction);
+  const colectUsers = collection(db, "users");
+  const colectTransaction = collection(db, "transaction");
   const colectPresenca = collection(db, colecao.presenca);
 
   const [FindAllUser, setFindAllUsers] = useState<IUserDto[]>([]);
@@ -68,6 +75,7 @@ export function Classificaçao() {
   const [presenca, setPresenca] = useState<[]>([]);
 
   const [load, setLoad] = useState(true);
+  const [loadEntrada, setLoadEntrada] = useState(true);
 
   useEffect(() => {
     getDocs(colectUsers).then(h => {
@@ -77,11 +85,16 @@ export function Classificaçao() {
       setFindAllUsers(res);
     });
 
-    store();
     getDocs(colectTransaction).then(h => {
       const trans = h.docs
         .map(p => p.data() as PropsEntrada)
-        .filter(h => h.type === "saida");
+        .filter(h => h.type === "saida")
+        .map(h => {
+          return {
+            ...h,
+            pontosSaida: 10,
+          };
+        });
 
       setFindSaida(trans);
     });
@@ -92,60 +105,80 @@ export function Classificaçao() {
     });
   }, [user.id]);
 
-  useEffect(() => {
-    const pres = FindAllUser.map((h, i) => {
-      const presen = presenca.filter(
-        h => h.user_id === user.id && h.presenca === true,
+  const PresencaRanking = useMemo(() => {
+    const data = FindAllUser.map((users, index) => {
+      const filtroPresença = presenca.filter(
+        h => h.user_id === users.id && h.presenca === true,
       );
-      console.log(presen);
+      const qntPresenca = filtroPresença.length;
+      const pontos = filtroPresença.length * 10;
       return {
-        qntPadrinho: h.padrinhQuantity,
-        qntPresenca: presen.length,
-        qntIndicacao: h.indicacao,
-        user_id: h.id,
+        user_id: users.id,
+        qntPresenca,
+        pontos,
       };
-    });
+    })
+      .sort((a, b) => {
+        return b.pontos - a.pontos;
+      })
+      .map((h, i) => {
+        return {
+          ...h,
+          position: `${i + 1}º`,
+        };
+      })
+      .find(h => h.user_id === user.id);
 
-    setQntGeral(pres);
+    return data;
   }, [FindAllUser, presenca, user.id]);
 
-  const PresencaRanking = useMemo(() => {
-    const st = qntGeral.sort((a, b) => {
-      return b.qntPresenca - a.qntPresenca;
-    });
-    return st.map((h, i) => {
-      return {
-        ...h,
-        position: `${i + 1}º`,
-      };
-    });
-  }, [qntGeral]);
-
   const Padrinho = useMemo(() => {
-    const st = qntGeral.sort((a, b) => {
-      return b.qntPadrinho - a.qntPadrinho;
-    });
-
-    return st.map((h, index) => {
+    const data = FindAllUser.map((users, index) => {
+      const qntPadrinho = users.padrinhQuantity;
+      const pontos = users.padrinhQuantity * 35;
       return {
-        ...h,
-        posicao: `${String(index + 1)}º`,
+        user_id: users.id,
+        qntPadrinho,
+        pontos,
       };
-    });
-  }, [qntGeral]);
+    })
+      .sort((a, b) => {
+        return b.pontos - a.pontos;
+      })
+      .map((h, i) => {
+        return {
+          ...h,
+          position: `${i + 1}º`,
+        };
+      })
+      .find(h => h.user_id === user.id);
+
+    return data;
+  }, [FindAllUser, user.id]);
 
   const Indicacao = useMemo(() => {
-    const st = qntGeral.sort((a, b) => {
-      return b.qntIndicacao - a.qntIndicacao;
-    });
-
-    return st.map((h, index) => {
+    const data = FindAllUser.map((users, index) => {
+      const qntPadrinho = users.indicacao;
+      const pontos = users.indicacao * 15;
       return {
-        ...h,
-        posicao: `${String(index + 1)}º`,
+        user_id: users.id,
+        qntPadrinho,
+        pontos,
       };
-    });
-  }, [qntGeral]);
+    })
+      .sort((a, b) => {
+        return b.pontos - a.pontos;
+      })
+      .map((h, i) => {
+        return {
+          ...h,
+          position: `${i + 1}º`,
+        };
+      })
+      .find(h => h.user_id === user.id);
+
+    return data;
+  }, [FindAllUser, user.id]);
 
   useEffect(() => {
     getDocs(colectUsers).then(h => {
@@ -155,15 +188,22 @@ export function Classificaçao() {
       setFindAllUsers(res);
     });
 
-    getDocs(colectUsers).then(h => {
-      const trans = h.docs
-        .map(p => p.data() as PropsEntrada)
-        .filter(h => h.type === "entrada");
+    getDocs(colectTransaction).then(h => {
+      const trans = h.docs.map(p => {
+        return p.data();
+      });
 
-      setFindEntrada(trans);
-      setLoad(false);
+      const fil = trans
+        .filter(h => h.type === "entrada")
+        .map(h => {
+          return {
+            ...h,
+            pontosEntrada: 10,
+          };
+        });
+      setFindEntrada(fil);
     });
-  }, [user.id]);
+  }, []);
 
   const Entrada = useMemo(() => {
     const data = FindAllUser.map((user, i) => {
@@ -177,6 +217,10 @@ export function Classificaçao() {
         return acc + Number(item.valor);
       }, 0);
 
+      const pontos = filtroConsumo.reduce((acc, item) => {
+        return acc + Number(item.pontosEntrada);
+      }, 0);
+
       const total = Number(valor).toLocaleString("pt-BR", {
         style: "currency",
         currency: "BRL",
@@ -187,8 +231,10 @@ export function Classificaçao() {
         nome: user.nome,
         valor,
         total,
+        pontos: filtroConsumo.length * 10,
+        totalPontos: pontos,
       };
-    }).sort((a, b) => Number(b.valor) - Number(a.valor));
+    }).sort((a, b) => Number(b.totalPontos) - Number(a.totalPontos));
 
     const po = data
       .map((h, i) => {
@@ -199,6 +245,8 @@ export function Classificaçao() {
         };
       })
       .find(h => h.id === user.id);
+
+    // setLoad(false);
 
     return po;
   }, [FindAllUser, findEntrada, user.id]);
@@ -215,6 +263,10 @@ export function Classificaçao() {
         return acc + Number(item.valor);
       }, 0);
 
+      const pontos = filtroConsumo.reduce((acc, item) => {
+        return acc + Number(item.pontosSaida);
+      }, 0);
+
       const total = Number(valor).toLocaleString("pt-BR", {
         style: "currency",
         currency: "BRL",
@@ -225,8 +277,10 @@ export function Classificaçao() {
         nome: user.nome,
         valor,
         total,
+        pontos: filtroConsumo.length * 10,
+        totalPontos: pontos,
       };
-    }).sort((a, b) => Number(b.valor) - Number(a.valor));
+    }).sort((a, b) => Number(b.pontos) - Number(a.pontos));
 
     const po = data
       .map((h, i) => {
@@ -241,19 +295,20 @@ export function Classificaçao() {
     return po;
   }, [FindAllUser, findSaida, user.id]);
 
-  const ranking = useMemo(() => {
-    const presensa = PresencaRanking.find(h => h.user_id === user.id);
-    const padrinho = Padrinho.find(h => h.user_id === user.id);
-    const indicacao = Indicacao.find(h => h.user_id === user.id);
-    return { presensa, padrinho, indicacao };
-  }, [Indicacao, Padrinho, PresencaRanking, user.id]);
+  useEffect(() => {
+    setTimeout(() => {
+      if (Entrada && Saida && PresencaRanking && Padrinho && Indicacao) {
+        setLoad(false);
+      }
+    }, 1000);
+  }, [Entrada, Saida, PresencaRanking, Padrinho, Indicacao]);
 
   return (
     <Container>
       <HeaderContaponent title="Ranking geral" onMessage="of" type="tipo1" />
       <BoxAvatar source={{ uri: user.avatarUrl }} />
       {load ? (
-        <ActivityIndicator size="large" color={theme.colors.focus_second} />
+        <Loading />
       ) : (
         <>
           <BoxEventos>
@@ -266,6 +321,7 @@ export function Classificaçao() {
             >
               <BoxContainer>
                 <Title>Entrada</Title>
+                <Title>{Entrada.totalPontos}pts</Title>
               </BoxContainer>
 
               <BoxPosition>
@@ -282,6 +338,7 @@ export function Classificaçao() {
             >
               <BoxContainer>
                 <Title>Saida</Title>
+                <Title>{Saida.totalPontos}pts</Title>
               </BoxContainer>
 
               <BoxPosition>
@@ -298,10 +355,11 @@ export function Classificaçao() {
             >
               <BoxContainer>
                 <Title>Indicações</Title>
+                <Title>{Indicacao.pontos}pts</Title>
               </BoxContainer>
 
               <BoxPosition>
-                <Title>{ranking.indicacao.posicao}</Title>
+                <Title>{Indicacao.position}</Title>
               </BoxPosition>
             </View>
 
@@ -314,10 +372,11 @@ export function Classificaçao() {
             >
               <BoxContainer>
                 <Title>Presença</Title>
+                <Title>{PresencaRanking.pontos}pts</Title>
               </BoxContainer>
 
               <BoxPosition>
-                <Title>{ranking.presensa.position}</Title>
+                <Title>{PresencaRanking.position}</Title>
               </BoxPosition>
             </View>
 
@@ -330,10 +389,11 @@ export function Classificaçao() {
             >
               <BoxContainer>
                 <Title>Padrinho</Title>
+                <Title>{Padrinho.pontos}pts</Title>
               </BoxContainer>
 
               <BoxPosition>
-                <Title>{ranking.padrinho.posicao}</Title>
+                <Title>{Padrinho.position}</Title>
               </BoxPosition>
             </View>
           </BoxEventos>

@@ -5,7 +5,7 @@ import { AntDesign, Feather } from "@expo/vector-icons";
 import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { Image, Modal, TouchableOpacity, View } from "react-native";
-import store from "firebase/firestore";
+import { collection, getFirestore, onSnapshot } from "firebase/firestore";
 import {
   Avatar,
   BoxAvatar,
@@ -51,10 +51,10 @@ export function HeaderContaponent({ title, onMessage, type }: Props) {
   }, [navigate]);
 
   const getTransaction = useCallback(async () => {
-    const db = store.getFirestore();
-    const colecao = store.collection(db, "order_transaction");
+    const db = getFirestore();
+    const colecao = collection(db, "order_transaction");
 
-    const load = store.onSnapshot(colecao, h => {
+    const load = onSnapshot(colecao, h => {
       const tras = h.docs.map(h => {
         return h.data() as Res;
       });

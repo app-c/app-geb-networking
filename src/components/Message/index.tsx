@@ -1,7 +1,14 @@
 /* eslint-disable camelcase */
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, FlatList, View } from "react-native";
-import store from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getFirestore,
+  onSnapshot,
+} from "firebase/firestore";
 import { format } from "date-fns";
 import { MessageComponent } from "../MessageComponent";
 import { Bot, Container, Flat, Text } from "./styles";
@@ -23,11 +30,12 @@ export interface ResTransaction {
 export function Menssage({ closeModal }: Props) {
   const [trans, setTrans] = useState<ResTransaction[]>([]);
   const { user } = useAuth();
-  const db = store.getFirestore();
-  const colecao = store.collection(db, "order_transaction");
+  const db = getFirestore();
+  const colecao = collection(db, "order_transaction");
+  const colecaoTransaction = collection(db, "transaction");
 
   useEffect(() => {
-    const clear = store.onSnapshot(colecao, h => {
+    const clear = onSnapshot(colecao, h => {
       const trans = h.docs.map(p => {
         return {
           id: p.id,
@@ -50,7 +58,7 @@ export function Menssage({ closeModal }: Props) {
       consumidor_id: string,
       id: string,
     ) => {
-      store.addDoc(colecao, {
+      addDoc(colecaoTransaction, {
         prestador_id,
         descricao,
         type: "entrada",
@@ -58,13 +66,16 @@ export function Menssage({ closeModal }: Props) {
         createdAt: format(new Date(Date.now()), "dd-MM-yyy-HH-mm"),
       });
 
-      store.addDoc(colecao, {
+      addDoc(colecaoTransaction, {
         consumidor_id,
         descricao,
         type: "saida",
         valor,
         createdAt: format(new Date(Date.now()), "dd-MM-yyy-HH-mm"),
       });
+
+      const ref = doc(colecao, id);
+      deleteDoc(ref).then(() => Alert.alert("Transação confirmada"));
 
       // store()
       //   .collection("order_transaction")
@@ -76,11 +87,8 @@ export function Menssage({ closeModal }: Props) {
   );
 
   const DeleteTransaction = useCallback(async (id: string) => {
-    // store()
-    //   .collection("order_transaction")
-    //   .doc(id)
-    //   .delete()
-    //   .then(() => Alert.alert("Transação confirmada"));
+    const ref = doc(colecao, id);
+    deleteDoc(ref).then(() => Alert.alert("Transação deletada"));
   }, []);
 
   return (

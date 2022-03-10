@@ -51,9 +51,15 @@ export function Membros() {
 
   useEffect(() => {
     const load = onSnapshot(colectUsers, h => {
-      const user = h.docs.map(h => {
-        return h.data() as IUserDto;
-      });
+      const user = h.docs
+        .map(h => {
+          return h.data() as IUserDto;
+        })
+        .sort((a, b) => {
+          if (a.nome < b.nome) {
+            return -1;
+          }
+        });
 
       setMembros(user);
       setLoad(false);
@@ -94,7 +100,7 @@ export function Membros() {
             </Box>
           </Form>
 
-          <View style={{ paddingBottom: RFPercentage(20) }}>
+          <View style={{ paddingBottom: 350 }}>
             <FlatList
               data={lista}
               keyExtractor={h => h.id}

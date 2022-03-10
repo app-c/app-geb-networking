@@ -20,9 +20,15 @@ export function FindUser() {
 
   useEffect(() => {
     const load = onSnapshot(users, h => {
-      const re = h.docs.map(p => {
-        return p.data() as IUserDto;
-      });
+      const re = h.docs
+        .map(p => {
+          return p.data() as IUserDto;
+        })
+        .sort((a, b) => {
+          if (a.nome < b.nome) {
+            return -1;
+          }
+        });
       setMembro(re);
       setLoad(false);
     });
@@ -47,9 +53,11 @@ export function FindUser() {
       setLista(membro);
     } else {
       setLista(
-        membro.filter(h => {
-          return h.nome.indexOf(value) > -1;
-        }),
+        membro
+          .filter(h => {
+            return h.nome.indexOf(value) > -1;
+          })
+          .sort(),
       );
     }
   }, [membro, value]);

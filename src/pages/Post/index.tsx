@@ -5,8 +5,15 @@ import { useNavigation } from "@react-navigation/native";
 import React, { useCallback, useEffect, useState } from "react";
 import { Alert, Platform } from "react-native";
 import { RFValue } from "react-native-responsive-fontsize";
-import buck from "firebase/storage";
-import store from "firebase/firestore";
+import storage, {
+  getDownloadURL,
+  getStorage,
+  ref,
+  updateMetadata,
+  uploadBytes,
+  uploadString,
+} from "firebase/storage";
+import store, { addDoc, collection, getFirestore } from "firebase/firestore";
 import {
   launchImageLibraryAsync,
   MediaTypeOptions,
@@ -30,6 +37,7 @@ import {
 import { useAuth } from "../../hooks/AuthContext";
 import { Loading } from "../../components/Loading";
 import { HeaderContaponent } from "../../components/HeaderComponent";
+import { colecao } from "../../collection";
 
 export function Post() {
   const { navigate } = useNavigation();
@@ -38,6 +46,10 @@ export function Post() {
   const [img, setImage] = useState("of");
   const [descricao, setDescricao] = useState("");
   const [load, setLoad] = useState(false);
+
+  const buck = getStorage();
+  const db = getFirestore();
+  const colect = collection(db, colecao.post);
 
   useEffect(() => {
     (async () => {
@@ -62,6 +74,7 @@ export function Post() {
       });
 
       if (!result.cancelled) {
+        console.log(result);
         setImage(result.uri);
       }
     }
@@ -75,29 +88,27 @@ export function Post() {
     setLoad(true);
 
     const fileName = new Date().getTime();
-    const reference = buck().ref(`/posts/${fileName}.png`);
+    const reference = ref(buck, `/posts/${img}.png`);
 
-    await reference.putFile(img);
+    console.log(reference.storage);
 
-    const res = await reference.getDownloadURL();
+    // const res = await getDownloadURL(reference);
 
-    store()
-      .collection("post")
-      .add({
-        nome: user.nome,
-        avater: user.avatarUrl,
-        descricao,
-        post: res,
-        like: 0,
-      })
-      .then(() => {
-        Alert.alert("Post", "post criado com sucesso!");
-        setLoad(false);
-      })
-      .catch(err => console.log(err));
+    // addDoc(colect, {
+    //   nome: user.nome,
+    //   avater: user.avatarUrl,
+    //   descricao,
+    //   post: res,
+    //   like: 0,
+    // })
+    //   .then(() => {
+    //     Alert.alert("Post", "post criado com sucesso!");
+    //     setLoad(false);
+    //   })
+    //   .catch(err => console.log(err));
 
     setLoad(false);
-    navigate("Home");
+    // navigate("Home");
   }, [descricao, img, navigate, user.avatarUrl, user.nome]);
 
   return (
