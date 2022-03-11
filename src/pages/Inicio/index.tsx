@@ -6,6 +6,7 @@ import {
   AntDesign,
   Feather,
   FontAwesome,
+  FontAwesome5,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -54,6 +55,9 @@ import {
 import handImage from "../../assets/hand.png";
 import { ModalOrderIndication } from "../../components/ModalOrderIndication";
 import { IUserDto } from "../../DtosUser";
+import { ModalB2b } from "../../components/ModalB2b";
+import { Menssage } from "../../components/Message";
+import { MessageComponent } from "../../components/MessageComponent";
 
 interface IOrder_Indication {
   id: string;
@@ -74,16 +78,41 @@ interface Propssuce {
   quemIndicou: string;
 }
 
+interface PropsB2b {
+  id: string;
+  data: { nanoseconds: number; seconds: number };
+  description: string;
+  nome: string;
+  user_id: string;
+  prestador_id: string;
+}
+
+interface ProsTransaction {
+  id: string;
+  data: {};
+  nome: string;
+  prestador_id: string;
+  valor: string;
+  description: string;
+}
+
 export function Inicio() {
   const { user, signOut } = useAuth();
-  const modalRef = useRef<Modalize>(null);
-  const modalSucess = useRef<Modalize>(null);
-  const [sucess, setSucess] = useState<Propssuce[]>([]);
   const navigate = useNavigation();
 
+  const modalRef = useRef<Modalize>(null);
+  const modalSucess = useRef<Modalize>(null);
+  const modalB2b = useRef<Modalize>(null);
+  const modalTransaction = useRef<Modalize>(null);
+
+  const [sucess, setSucess] = useState<Propssuce[]>([]);
   const [price, setPrice] = useState("");
   const [montante, setMontante] = useState("");
   const [montanteP, setMontanteP] = useState("");
+  const [orderB2b, setOrderB2b] = useState<PropsB2b[]>([]);
+  const [orderTransaction, setOrderTransaction] = useState<ProsTransaction[]>(
+    [],
+  );
   const [orderIndication, setOrderIndication] = useState<IOrder_Indication[]>(
     [],
   );
@@ -93,6 +122,9 @@ export function Inicio() {
   const colecaoSucessIndication = collection(db, "sucess_indication");
   const colecaoTransaction = collection(db, "transaction");
   const colecaoUsers = collection(db, "users");
+  const colecaoOrderB2B = collection(db, "order_b2b");
+  const colecaoB2b = collection(db, "b2b");
+  const colecaoOrderTransaction = collection(db, "order_transaction");
 
   useEffect(() => {
     const load = onSnapshot(colecaoOrderIndication, h => {
@@ -123,6 +155,35 @@ export function Inicio() {
     return () => load();
   }, []);
 
+  useEffect(() => {
+    const load = onSnapshot(colecaoOrderB2B, h => {
+      const res = h.docs.map(p => {
+        return {
+          id: p.id,
+          ...p.data(),
+        } as PropsB2b;
+      });
+      setOrderB2b(res.filter(h => h.prestador_id === user.id));
+    });
+
+    return () => load();
+  }, []);
+
+  useEffect(() => {
+    const load = onSnapshot(colecaoOrderTransaction, h => {
+      const res = h.docs
+        .map(p => {
+          return {
+            id: p.id,
+            ...p.data(),
+          } as ProsTransaction;
+        })
+        .filter(h => h.prestador_id === user.id);
+      setOrderTransaction(res);
+    });
+    return () => load();
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       if (orderIndication.length > 0) {
@@ -131,11 +192,19 @@ export function Inicio() {
       if (sucess.length > 0) {
         modalSucess.current.open();
       }
-    }, [orderIndication.length, sucess.length]),
+      if (orderB2b.length > 0) {
+        modalB2b.current.open();
+      }
+
+      if (orderTransaction.length > 0) {
+        modalTransaction.current.open();
+      }
+    }, [orderB2b.length, orderIndication.length, sucess.length]),
   );
 
   const ClosedModal = useCallback(() => {
     modalRef.current.close();
+    modalTransaction.current.close();
   }, []);
 
   const ClosedModalSucess = useCallback(() => {
@@ -149,7 +218,7 @@ export function Inicio() {
     [navigate],
   );
 
-  const HandFailTransaction = useCallback(
+  const HandFailIndication = useCallback(
     async (id: string, quemIndicou: string) => {
       const orderIndicationRef = doc(colecaoOrderIndication, id);
       const userRef = doc(colecaoUsers, quemIndicou);
@@ -174,9 +243,52 @@ export function Inicio() {
     [],
   );
 
+  const handleFailB2b = useCallback((id: string) => {
+    const ref = doc(colecaoOrderB2B, id);
+    deleteDoc(ref);
+    modalB2b.current.close();
+  }, []);
+
+  const handleSucessB2b = useCallback(
+    (id: string, user_id: string, prestador_id: string) => {
+      const data = format(new Date(Date.now()), "dd-MM-yy-HH-mm");
+      addDoc(colecaoB2b, {
+        id,
+        user_id,
+        prestador_id,
+        data,
+      }).then(() => {
+        const ref = doc(colecaoOrderB2B, id);
+        deleteDoc(ref);
+        Alert.alert("B2B realizado com sucesso!");
+        modalB2b.current.close();
+      });
+    },
+    [],
+  );
+
   const handleSucess = useCallback(async (id: string) => {
     const sucessRef = doc(colecaoSucessIndication, id);
     await deleteDoc(sucessRef);
+  }, []);
+
+  const handleTransaction = useCallback(
+    async (prestador_id: string, descricao: string, id: string) => {
+      addDoc(colecaoTransaction, {
+        prestador_id,
+        descricao,
+        createdAt: format(new Date(Date.now()), "dd-MM-yyy-HH-mm"),
+      });
+
+      const ref = doc(colecaoOrderTransaction, id);
+      deleteDoc(ref).then(() => Alert.alert("Transação confirmada"));
+    },
+    [],
+  );
+
+  const DeleteTransaction = useCallback(async (id: string) => {
+    const ref = doc(colecao, id);
+    deleteDoc(ref).then(() => Alert.alert("Transação deletada"));
   }, []);
 
   useEffect(() => {
@@ -244,6 +356,8 @@ export function Inicio() {
   const anoPass = new Date(Date.now()).getFullYear() - 1;
   const anoAtual = new Date(Date.now()).getFullYear();
 
+  console.log(orderB2b);
+
   return (
     <Container>
       <View
@@ -277,7 +391,7 @@ export function Inicio() {
         </BoxIco>
       )}
 
-      <TitleName> {} </TitleName>
+      <TitleName> {user.nome} </TitleName>
 
       <BoxPrice>
         <TitlePrice>{price}</TitlePrice>
@@ -294,8 +408,6 @@ export function Inicio() {
         <Text style={{ marginLeft: 16 }}>Total de negócios de {anoAtual}</Text>
         <Text style={{ marginLeft: 16 }}>{montante}</Text>
       </View>
-
-      <Line />
 
       <Modalize
         ref={modalSucess}
@@ -384,7 +496,7 @@ export function Inicio() {
                 handShak={() => {
                   HandShak(h.quemIndicou, h.id);
                 }}
-                failTransaction={() => HandFailTransaction(h.id, h.quemIndicou)}
+                failTransaction={() => HandFailIndication(h.id, h.quemIndicou)}
                 quemIndicouName={h.quemIndicouName}
                 quemIndicouWorkName={h.quemIndicouWorkName}
               />
@@ -393,11 +505,97 @@ export function Inicio() {
         </View>
       </Modalize>
 
+      <Modalize
+        handlePosition="inside"
+        ref={modalB2b}
+        snapPoint={400}
+        modalStyle={{
+          width: "90%",
+          alignSelf: "center",
+        }}
+      >
+        <View>
+          <TouchableOpacity
+            onPress={ClosedModal}
+            style={{
+              alignSelf: "flex-end",
+              marginRight: 10,
+              padding: 10,
+            }}
+          >
+            <AntDesign
+              name="closecircle"
+              size={30}
+              color={theme.colors.focus}
+            />
+          </TouchableOpacity>
+          {orderB2b.map(h => (
+            <View key={h.data.nanoseconds}>
+              <ModalB2b
+                clientName={h.nome}
+                handShak={() => {
+                  handleSucessB2b(h.id, h.user_id, h.prestador_id);
+                }}
+                failTransaction={() => handleFailB2b(h.id)}
+              />
+            </View>
+          ))}
+        </View>
+      </Modalize>
+
+      <Modalize
+        handlePosition="inside"
+        ref={modalTransaction}
+        snapPoint={300}
+        modalStyle={{
+          width: "90%",
+          alignSelf: "center",
+        }}
+      >
+        <View>
+          <TouchableOpacity
+            onPress={ClosedModal}
+            style={{
+              alignSelf: "flex-end",
+              marginRight: 10,
+              padding: 10,
+            }}
+          >
+            <AntDesign
+              name="closecircle"
+              size={30}
+              color={theme.colors.focus}
+            />
+          </TouchableOpacity>
+          {orderTransaction.map(h => (
+            <View key={h.id}>
+              <MessageComponent
+                confirmar={() => {
+                  handleTransaction(h.prestador_id, h.description, h.id);
+                }}
+                nome={h.nome}
+                rejeitar={() => {
+                  DeleteTransaction(h.id);
+                }}
+                valor={h.valor}
+              />
+            </View>
+          ))}
+        </View>
+      </Modalize>
+
+      <Line />
+
       <Scroll
         nestedScrollEnabled
         showsVerticalScrollIndicator
         contentContainerStyle={{ paddingBottom: 40 }}
       >
+        <Box onPress={() => navigate.navigate("home")}>
+          <IconIoncic name="home" color={theme.colors.focus} />
+          <Title>Menu inicial</Title>
+        </Box>
+
         <Box onPress={() => navigate.navigate("valide")}>
           <Image
             source={handImage}
@@ -407,11 +605,6 @@ export function Inicio() {
             }}
           />
           <Title>Valide sua presença</Title>
-        </Box>
-
-        <Box onPress={() => navigate.navigate("home")}>
-          <IconIoncic name="home" color={theme.colors.focus} />
-          <Title>Menu inicial</Title>
         </Box>
 
         <Box onPress={() => navigate.navigate("negociar")}>
@@ -429,6 +622,27 @@ export function Inicio() {
           <IconAnt name="swap" color={theme.colors.focus} />
 
           <Title>Indicações</Title>
+        </Box>
+
+        <Box onPress={() => navigate.navigate("b2b")}>
+          <FontAwesome5 name="users" size={23} color={theme.colors.focus} />
+
+          <Title>B2B</Title>
+        </Box>
+
+        <Box onPress={() => navigate.navigate("findUser")}>
+          <IconFont name="map-marker-alt" color={theme.colors.focus} />
+          <Title>Localize os membros</Title>
+        </Box>
+
+        <Box>
+          <IconFoundation name="clipboard-notes" color={theme.colors.focus} />
+          <Title>Regras do projeto</Title>
+        </Box>
+
+        <Box onPress={() => navigate.navigate("classificaçao")}>
+          <IconIoncic name="ios-podium" color={theme.colors.focus} />
+          <Title>Minha classificação</Title>
         </Box>
 
         {user.adm && (
@@ -462,21 +676,6 @@ export function Inicio() {
             </Box>
           </View>
         )}
-
-        <Box onPress={() => navigate.navigate("findUser")}>
-          <IconFont name="map-marker-alt" color={theme.colors.focus} />
-          <Title>Localize os membros</Title>
-        </Box>
-
-        <Box>
-          <IconFoundation name="clipboard-notes" color={theme.colors.focus} />
-          <Title>Regras do projeto</Title>
-        </Box>
-
-        <Box onPress={() => navigate.navigate("classificaçao")}>
-          <IconIoncic name="ios-podium" color={theme.colors.focus} />
-          <Title>Minha classificação</Title>
-        </Box>
       </Scroll>
     </Container>
   );

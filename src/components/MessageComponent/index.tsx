@@ -1,3 +1,4 @@
+/* eslint-disable react/require-default-props */
 import React from "react";
 import { View } from "react-native";
 import { RFValue } from "react-native-responsive-fontsize";
@@ -12,7 +13,7 @@ import {
 
 interface Props {
   nome: string;
-  valor: string;
+  valor?: string;
   confirmar: () => void;
   rejeitar: () => void;
 }
@@ -34,7 +35,7 @@ export function MessageComponent({ nome, valor, confirmar, rejeitar }: Props) {
         }}
       >
         <Text>
-          {nome} acabou de consumir seu produto ou serviço no valor de R$ $
+          {nome} acabou de consumir seu produto ou serviço no valor de R$
           {valor}
         </Text>
 

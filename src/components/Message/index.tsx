@@ -31,8 +31,8 @@ export function Menssage({ closeModal }: Props) {
   const [trans, setTrans] = useState<ResTransaction[]>([]);
   const { user } = useAuth();
   const db = getFirestore();
-  const colecao = collection(db, "order_transaction");
-  const colecaoTransaction = collection(db, "transaction");
+  const colecao = collection(db, "order_b2b");
+  const colecaoTransaction = collection(db, "b2b");
 
   useEffect(() => {
     const clear = onSnapshot(colecao, h => {
@@ -51,26 +51,10 @@ export function Menssage({ closeModal }: Props) {
   }, []);
 
   const Confirmation = useCallback(
-    async (
-      prestador_id: string,
-      descricao: string,
-      valor: string,
-      consumidor_id: string,
-      id: string,
-    ) => {
+    async (prestador_id: string, descricao: string, id: string) => {
       addDoc(colecaoTransaction, {
         prestador_id,
         descricao,
-        type: "entrada",
-        valor,
-        createdAt: format(new Date(Date.now()), "dd-MM-yyy-HH-mm"),
-      });
-
-      addDoc(colecaoTransaction, {
-        consumidor_id,
-        descricao,
-        type: "saida",
-        valor,
         createdAt: format(new Date(Date.now()), "dd-MM-yyy-HH-mm"),
       });
 
@@ -101,13 +85,7 @@ export function Menssage({ closeModal }: Props) {
         renderItem={({ item: h }) => (
           <MessageComponent
             confirmar={() => {
-              Confirmation(
-                h.prestador_id,
-                h.description,
-                h.valor,
-                h.consumidor,
-                h.id,
-              );
+              Confirmation(h.prestador_id, h.description, h.id);
             }}
             rejeitar={() => DeleteTransaction(h.id)}
             nome={h.nome}

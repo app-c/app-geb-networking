@@ -234,7 +234,13 @@ export function Classificaçao() {
         pontos: filtroConsumo.length * 10,
         totalPontos: pontos,
       };
-    }).sort((a, b) => Number(b.totalPontos) - Number(a.totalPontos));
+    })
+      .sort((a, b) => {
+        if (a.nome < b.nome) {
+          return -1;
+        }
+      })
+      .sort((a, b) => Number(b.totalPontos) - Number(a.totalPontos));
 
     const po = data
       .map((h, i) => {
@@ -280,7 +286,13 @@ export function Classificaçao() {
         pontos: filtroConsumo.length * 10,
         totalPontos: pontos,
       };
-    }).sort((a, b) => Number(b.pontos) - Number(a.pontos));
+    })
+      .sort((a, b) => {
+        if (a.nome < b.nome) {
+          return -1;
+        }
+      })
+      .sort((a, b) => Number(b.pontos) - Number(a.pontos));
 
     const po = data
       .map((h, i) => {

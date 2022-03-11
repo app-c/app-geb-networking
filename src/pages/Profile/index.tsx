@@ -32,8 +32,20 @@ import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
 
 import { Modalize } from "react-native-modalize";
 import { Form } from "@unform/mobile";
-import buckt from "firebase/storage";
-import storage from "firebase/firestore";
+import buckt, {
+  getDownloadURL,
+  getStorage,
+  ref,
+  uploadBytes,
+  uploadBytesResumable,
+  uploadString,
+} from "firebase/storage";
+import storage, {
+  collection,
+  doc,
+  getFirestore,
+  updateDoc,
+} from "firebase/firestore";
 import theme from "../../global/styles/theme";
 import { useAuth } from "../../hooks/AuthContext";
 import {
@@ -64,6 +76,7 @@ import { Input } from "../../components/Inputs";
 import { HeaderContaponent } from "../../components/HeaderComponent";
 import { ToglleEnquadramento } from "../../components/ToglleEnquadramento";
 import { FindUser } from "../FindMembro";
+import { api } from "../../vervices/api";
 
 export interface Props {
   id: string;
@@ -110,11 +123,15 @@ export function Profile() {
   const [linkMaps, setLinkMaps] = useState(user.links[3]);
   const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl);
   const [logoUrl, setLogorUrl] = useState(user.logoUrl);
+  const [uri, setUri] = useState("");
 
   // TODO MODAL
   const [ramo, setRamo] = useState(user.ramo);
   const [enquadramento, setEnquadramento] = useState(user.enquadramento);
   const [modal, setModal] = useState(false);
+
+  const db = getFirestore();
+  const colectUsers = collection(db, "users");
 
   const handleModalOpenRamo = useCallback(() => {
     modalizeRefRamo.current?.open();
@@ -146,8 +163,6 @@ export function Profile() {
 
   const wh = "https://api.whatsapp.com/send?phone=5514998377446";
 
-  console.log(w);
-
   const handleSubmit = useCallback(async () => {
     formRef.current?.setErrors({});
 
@@ -167,28 +182,50 @@ export function Profile() {
       avatarUrl,
       logoUrl,
     };
+    const data = new FormData();
+    const fileName = new Date().getTime();
+
+    const obj = {
+      type: "image/jpeg",
+      name: `${fileName}.jpeg`,
+      uri,
+    };
+
+    data.append("avatar", {
+      type: uri.type,
+      name: `${user.id}.jpg`,
+      uri: uri.uri,
+    });
+
+    console.log(data);
+
+    // await fetch("http://dev.app-com.digital:3333/user/avatar", {
+    //   method: "post",
+    //   headers: {
+    //     "Content-Type": "multipart/form-data",
+    //   },
+    //   body: ,
+    // }).then(h => console.log(h));
 
     // const url = await reference.getDownloadURL();
     // setAvatarUrl(url);
+    const ref = doc(colectUsers, user.id);
 
-    storage()
-      .collection("users")
-      .doc(user.id)
-      .update({
-        id: user.id,
-        nome,
-        adm: user.adm,
-        whats: String(whats),
-        workName,
-        CPF: String(CPF),
-        CNPJ: String(cnpj),
-        email,
-        ramo,
-        enquadramento,
-        links: [wh, linkF, linkI, linkMaps],
-        avatarUrl,
-        logoUrl,
-      })
+    updateDoc(ref, {
+      id: user.id,
+      nome,
+      adm: user.adm,
+      whats: String(whats),
+      workName,
+      CPF: String(CPF),
+      CNPJ: String(cnpj),
+      email,
+      ramo,
+      enquadramento,
+      links: [wh, linkF, linkI, linkMaps],
+      avatarUrl,
+      logoUrl,
+    })
       .finally(() => updateUser(formData))
 
       .catch(err => console.log(err.code));
@@ -205,10 +242,9 @@ export function Profile() {
     linkI,
     linkMaps,
     logoUrl,
-    navigate,
     nome,
     ramo,
-    updateUser,
+    uri,
     user.adm,
     user.id,
     user.padrinhQuantity,
@@ -230,6 +266,7 @@ export function Profile() {
 
   const handleImagePiker = useCallback(async () => {
     setLoading(true);
+    const img = "";
     const { status } = await requestMediaLibraryPermissionsAsync();
 
     // alert("Permission to access camera roll is required!");
@@ -242,16 +279,12 @@ export function Profile() {
       });
 
       if (!result.cancelled) {
-        const fileName = new Date().getTime();
-        const reference = buckt().ref(`/avatar/${fileName}.png`);
+        setUri(result);
 
-        await reference
-          .putFile(result.uri)
-          .then(() => Alert.alert("Troca de avatar realizada!"));
+        // const reference = ref(db, `/avatar/${fileName}.png`).put(result.uri);
 
-        const res = await reference.getDownloadURL();
-
-        setAvatarUrl(res);
+        // await uploadBytesResumable(reference, result.uri);
+        // const res = await getDownloadURL(reference);
       }
     }
 

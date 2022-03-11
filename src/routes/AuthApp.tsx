@@ -15,6 +15,8 @@ import { Indicaçoes } from "../pages/Indicaçes";
 import { Indication } from "../pages/Idication";
 import { TabBarApp } from "./TabBarApp";
 import { StacKMembros } from "./StackMembros";
+import { B2B } from "../pages/B2B";
+import { StacKB2b } from "./StackB2b";
 
 const Stak = createStackNavigator();
 
@@ -31,6 +33,7 @@ export function AuthApp() {
       <Stak.Screen name="consumo" component={Consumo} />
       <Stak.Screen name="negociar" component={StacKMembros} />
       <Stak.Screen name="indicacao" component={Indicaçoes} />
+      <Stak.Screen name="b2b" component={StacKB2b} />
 
       <Stak.Screen name="ranking" component={Ranking} />
       <Stak.Screen name="user" component={SingUp} />

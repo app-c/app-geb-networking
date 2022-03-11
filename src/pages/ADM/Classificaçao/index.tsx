@@ -1,3 +1,4 @@
+/* eslint-disable array-callback-return */
 /* eslint-disable consistent-return */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable camelcase */
@@ -36,6 +37,7 @@ import {
 import { IUserDto } from "../../../DtosUser";
 import { Loading } from "../../../components/Loading";
 import { ExtratoModal } from "../../../components/ExtratoModal";
+import { useAuth } from "../../../hooks/AuthContext";
 
 interface IPropsTransaction {
   createdAt: string;
@@ -57,6 +59,7 @@ interface IQnt {
 }
 
 export function Ranking() {
+  const { user } = useAuth();
   const modalEntradaSaida = useRef<Modalize>(null);
   const [type, setType] = useState("entrada");
   const [filtro, setFiltro] = useState("mes");
@@ -73,7 +76,7 @@ export function Ranking() {
   const db = getFirestore();
   const colecaoUsers = collection(db, "users");
   const colecaoTransaction = collection(db, "transaction");
-  const colecaoPresenca = collection(db, "preseça");
+  const colecaoPresenca = collection(db, "presença");
 
   // todo entrada ...................
   useEffect(() => {
@@ -100,7 +103,101 @@ export function Ranking() {
   }, []);
 
   const Entrada = useMemo(() => {
-    const data = Users.map((user, i) => {
+    const dataNowMes = new Date(Date.now()).getMonth() + 1;
+    const dataNowAno = new Date(Date.now()).getFullYear();
+
+    const filterMes = findEntrada.filter(p => {
+      const [dia, mes, ano] = p.createdAt.split("-").map(Number);
+      if (mes === dataNowMes) {
+        return p;
+      }
+    });
+
+    const filterAno = findEntrada.filter(p => {
+      const [dia, mes, ano] = p.createdAt.split("-").map(Number);
+      if (ano === dataNowAno) {
+        return p;
+      }
+    });
+
+    const dataMes = Users.map((users, i) => {
+      const filtroConsumo = filterMes.filter(h => {
+        if (h.prestador_id === users.id) {
+          return h;
+        }
+      });
+
+      const valor = filtroConsumo.reduce((acc, item) => {
+        return acc + Number(item.valor);
+      }, 0);
+
+      const pontos = filtroConsumo.reduce((acc, item) => {
+        return acc + Number(item.ponto);
+      }, 0);
+
+      const total = Number(valor).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      });
+
+      return {
+        id: users.id,
+        nome: users.nome,
+        valor,
+        total,
+        pontos,
+        workName: users.workName,
+      };
+    })
+      .sort((a, b) => {
+        if (a.nome < b.nome) {
+          return -1;
+        }
+      })
+      .sort((a, b) => Number(b.pontos) - Number(a.pontos));
+
+    const dataAno = Users.map((user, i) => {
+      const filtroConsumo = filterAno.filter(h => {
+        if (h.prestador_id === user.id) {
+          return h;
+        }
+      });
+
+      const filtroData = filtroConsumo.find(h => h.prestador_id === user.id)!;
+
+      const dataF = filtroData?.createdAt;
+
+      const valor = filtroConsumo.reduce((acc, item) => {
+        return acc + Number(item.valor);
+      }, 0);
+
+      const pontos = filtroConsumo.reduce((acc, item) => {
+        return acc + Number(item.ponto);
+      }, 0);
+
+      const total = Number(valor).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      });
+
+      return {
+        id: user.id,
+        nome: user.nome,
+        valor,
+        total,
+        pontos,
+        data: dataF,
+        workName: user.workName,
+      };
+    })
+      .sort((a, b) => {
+        if (a.nome < b.nome) {
+          return -1;
+        }
+      })
+      .sort((a, b) => Number(b.pontos) - Number(a.pontos));
+
+    const dataTodos = Users.map((user, i) => {
       const filtroConsumo = findEntrada.filter(h => {
         if (h.prestador_id === user.id) {
           return h;
@@ -134,31 +231,15 @@ export function Ranking() {
         workName: user.workName,
       };
     })
-      .sort((a, b) => Number(b.pontos) - Number(a.pontos))
-      .filter(h => h.data !== undefined);
-
-    const dataNowDia = new Date(Date.now()).getDate();
-    const dataNowMes = new Date(Date.now()).getMonth() + 1;
-    const dataNowAno = new Date(Date.now()).getFullYear();
-    const dataNowHora = new Date(Date.now()).getHours();
-    const dataNowMin = new Date(Date.now()).getMinutes();
-    const dataN = new Date(Date.now());
-
-    const filterMes = data.filter(p => {
-      const [dia, mes, ano] = p.data.split("-").map(Number);
-      if (mes === dataNowMes) {
-        return p;
-      }
-    });
-
-    const filterAno = data.filter(p => {
-      if (dataN.getFullYear() === dataNowAno) {
-        return p;
-      }
-    });
+      .sort((a, b) => {
+        if (a.nome < b.nome) {
+          return -1;
+        }
+      })
+      .sort((a, b) => Number(b.pontos) - Number(a.pontos));
 
     if (filtro === "mes") {
-      return filterMes.map((h, i) => {
+      return dataMes.map((h, i) => {
         const po = i + 1;
         return {
           ...h,
@@ -168,7 +249,7 @@ export function Ranking() {
     }
 
     if (filtro === "ano") {
-      return filterAno.map((h, i) => {
+      return dataAno.map((h, i) => {
         const po = i + 1;
         return {
           ...h,
@@ -178,7 +259,7 @@ export function Ranking() {
     }
 
     if (filtro === "todos") {
-      return data.map((h, i) => {
+      return dataTodos.map((h, i) => {
         const po = i + 1;
         return {
           ...h,
@@ -214,17 +295,29 @@ export function Ranking() {
   }, []);
 
   const Saida = useMemo(() => {
-    const data = Users.map((users, i) => {
-      const filtroConsumo = findSaida.filter(h => {
+    const dataNowMes = new Date(Date.now()).getMonth() + 1;
+    const dataNowAno = new Date(Date.now()).getFullYear();
+
+    const filterMes = findSaida.filter(p => {
+      const [dia, mes, ano] = p.createdAt.split("-").map(Number);
+      if (mes === dataNowMes) {
+        return p;
+      }
+    });
+
+    const filterAno = findSaida.filter(p => {
+      const [dia, mes, ano] = p.createdAt.split("-").map(Number);
+      if (ano === dataNowAno) {
+        return p;
+      }
+    });
+
+    const dataMes = Users.map((users, i) => {
+      const filtroConsumo = filterMes.filter(h => {
         if (h.consumidor_id === users.id) {
           return h;
         }
       });
-      console.log(filtroConsumo);
-
-      const filtroData = filtroConsumo.find(h => h.prestador_id === users.id)!;
-
-      const dataF = filtroData?.createdAt;
 
       const valor = filtroConsumo.reduce((acc, item) => {
         return acc + Number(item.valor);
@@ -245,35 +338,100 @@ export function Ranking() {
         valor,
         total,
         pontos,
-        data: dataF,
         workName: users.workName,
       };
     })
-      .sort((a, b) => Number(b.pontos) - Number(a.pontos))
-      .filter(h => h.data !== undefined);
+      .sort((a, b) => {
+        if (a.nome < b.nome) {
+          return -1;
+        }
+      })
+      .sort((a, b) => Number(b.pontos) - Number(a.pontos));
 
-    const dataNowDia = new Date(Date.now()).getDate();
-    const dataNowMes = new Date(Date.now()).getMonth() + 1;
-    const dataNowAno = new Date(Date.now()).getFullYear();
-    const dataNowHora = new Date(Date.now()).getHours();
-    const dataNowMin = new Date(Date.now()).getMinutes();
-    const dataN = new Date(Date.now());
+    const dataAno = Users.map((user, i) => {
+      const filtroConsumo = filterAno.filter(h => {
+        if (h.consumidor_id === user.id) {
+          return h;
+        }
+      });
 
-    const filterMes = data.filter(p => {
-      const [dia, mes, ano] = p.data.split("-").map(Number);
-      if (mes === dataNowMes) {
-        return p;
-      }
-    });
+      const filtroData = filtroConsumo.find(h => h.prestador_id === user.id)!;
 
-    const filterAno = data.filter(p => {
-      if (dataN.getFullYear() === dataNowAno) {
-        return p;
-      }
-    });
+      const dataF = filtroData?.createdAt;
+
+      const valor = filtroConsumo.reduce((acc, item) => {
+        return acc + Number(item.valor);
+      }, 0);
+
+      const pontos = filtroConsumo.reduce((acc, item) => {
+        return acc + Number(item.ponto);
+      }, 0);
+
+      const total = Number(valor).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      });
+
+      return {
+        id: user.id,
+        nome: user.nome,
+        valor,
+        total,
+        pontos,
+        data: dataF,
+        workName: user.workName,
+      };
+    })
+      .sort((a, b) => {
+        if (a.nome < b.nome) {
+          return -1;
+        }
+      })
+      .sort((a, b) => Number(b.pontos) - Number(a.pontos));
+
+    const dataTodos = Users.map((user, i) => {
+      const filtroConsumo = filterAno.filter(h => {
+        if (h.consumidor_id === user.id) {
+          return h;
+        }
+      });
+
+      const filtroData = filtroConsumo.find(h => h.prestador_id === user.id)!;
+
+      const dataF = filtroData?.createdAt;
+
+      const valor = filtroConsumo.reduce((acc, item) => {
+        return acc + Number(item.valor);
+      }, 0);
+
+      const pontos = filtroConsumo.reduce((acc, item) => {
+        return acc + Number(item.ponto);
+      }, 0);
+
+      const total = Number(valor).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      });
+
+      return {
+        id: user.id,
+        nome: user.nome,
+        valor,
+        total,
+        pontos,
+        data: dataF,
+        workName: user.workName,
+      };
+    })
+      .sort((a, b) => {
+        if (a.nome < b.nome) {
+          return -1;
+        }
+      })
+      .sort((a, b) => Number(b.pontos) - Number(a.pontos));
 
     if (filtro === "mes") {
-      return filterMes.map((h, i) => {
+      return dataMes.map((h, i) => {
         const po = i + 1;
         return {
           ...h,
@@ -283,7 +441,7 @@ export function Ranking() {
     }
 
     if (filtro === "ano") {
-      return filterAno.map((h, i) => {
+      return dataAno.map((h, i) => {
         const po = i + 1;
         return {
           ...h,
@@ -293,7 +451,7 @@ export function Ranking() {
     }
 
     if (filtro === "todos") {
-      return data.map((h, i) => {
+      return dataTodos.map((h, i) => {
         const po = i + 1;
         return {
           ...h,
@@ -362,43 +520,97 @@ export function Ranking() {
   }, [Users, responsePresenca]);
 
   const PresencaRanking = useMemo(() => {
-    const st = qntGeral.sort((a, b) => {
-      return b.qntPresenca - a.qntPresenca;
-    });
-    return st.map((h, i) => {
+    const data = Users.map((users, index) => {
+      const filtroPresença = responsePresenca.filter(
+        h => h.user_id === users.id && h.presenca === true,
+      );
+      const qntPresenca = filtroPresença.length;
+      const pontos = filtroPresença.length * 10;
       return {
-        ...h,
-        qntPresenca: h.qntPresenca,
-        position: `${i + 1}º`,
+        user_id: users.id,
+        qntPresenca,
+        pontos,
+        nome: users.nome,
+        workName: users.workName,
       };
-    });
-  }, [qntGeral]);
+    })
+      .sort((a, b) => {
+        if (a.nome < b.nome) {
+          return -1;
+        }
+      })
+      .sort((a, b) => {
+        return b.pontos - a.pontos;
+      })
+      .map((h, i) => {
+        return {
+          ...h,
+          position: `${i + 1}º`,
+        };
+      });
+
+    return data;
+  }, [Users, responsePresenca]);
 
   const Padrinho = useMemo(() => {
-    const st = qntGeral.sort((a, b) => {
-      return b.qntPadrinho - a.qntPadrinho;
-    });
-
-    return st.map((h, index) => {
+    const data = Users.map((users, index) => {
+      const qntPadrinho = users.padrinhQuantity;
+      const pontos = users.padrinhQuantity * 35;
       return {
-        ...h,
-        posicao: `${String(index + 1)}º`,
+        user_id: users.id,
+        qntPadrinho,
+        pontos,
+        nome: users.nome,
+        workName: users.workName,
       };
-    });
-  }, [qntGeral]);
+    })
+      .sort((a, b) => {
+        if (a.nome < b.nome) {
+          return -1;
+        }
+      })
+      .sort((a, b) => {
+        return b.pontos - a.pontos;
+      })
+      .map((h, i) => {
+        return {
+          ...h,
+          position: `${i + 1}º`,
+        };
+      });
+
+    return data;
+  }, [Users]);
 
   const Indicacao = useMemo(() => {
-    const st = qntGeral.sort((a, b) => {
-      return b.qntIndicacao - a.qntIndicacao;
-    });
-
-    return st.map((h, index) => {
+    const data = Users.map((users, index) => {
+      const qntPadrinho = users.indicacao;
+      const pontos = users.indicacao * 15;
       return {
-        ...h,
-        posicao: `${String(index + 1)}º`,
+        user_id: users.id,
+        qntPadrinho,
+        pontos,
+        nome: users.nome,
+        workName: users.workName,
       };
-    });
-  }, [qntGeral]);
+    })
+      .sort((a, b) => {
+        if (a.nome < b.nome) {
+          return -1;
+        }
+      })
+      .sort((a, b) => {
+        return b.pontos - a.pontos;
+      })
+      .map((h, i) => {
+        return {
+          ...h,
+          position: `${i + 1}º`,
+        };
+      });
+
+    return data;
+  }, [Users]);
 
   useEffect(() => {
     setTimeout(() => {
@@ -674,7 +886,7 @@ export function Ranking() {
                             color: theme.colors.text_secundary,
                           }}
                         >
-                          {h.posicao}
+                          {h.position}
                         </TitleList>
                       </BoxClassificacao>
                       <View
@@ -708,9 +920,9 @@ export function Ranking() {
                             textAlign: "center",
                           }}
                         >
-                          Quantidade
+                          Pontuação
                         </TitleList>
-                        <TitleList>{h.qntIndicacao} </TitleList>
+                        <TitleList>{h.pontos}pts </TitleList>
                       </View>
                     </BoxLista>
                   </View>
@@ -771,9 +983,9 @@ export function Ranking() {
                             textAlign: "center",
                           }}
                         >
-                          Quantidade
+                          Pontos
                         </TitleList>
-                        <TitleList>{h.qntPresenca} </TitleList>
+                        <TitleList>{h.pontos} </TitleList>
                       </View>
                     </BoxLista>
                   </View>
@@ -800,7 +1012,7 @@ export function Ranking() {
                             color: theme.colors.text_secundary,
                           }}
                         >
-                          {h.posicao}
+                          {h.position}
                         </TitleList>
                       </BoxClassificacao>
                       <View
@@ -834,9 +1046,9 @@ export function Ranking() {
                             textAlign: "center",
                           }}
                         >
-                          Quantidade
+                          Pontos
                         </TitleList>
-                        <TitleList>{h.qntPadrinho} </TitleList>
+                        <TitleList>{h.pontos} </TitleList>
                       </View>
                     </BoxLista>
                   </View>

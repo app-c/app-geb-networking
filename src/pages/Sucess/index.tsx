@@ -65,7 +65,11 @@ export function Sucess() {
         Aguarde a confimação da {paramsRoute.workName}
       </Message>
 
-      <Button onPress={navigateToHome}>
+      <Button
+        onPress={() => {
+          navigate("Inicio");
+        }}
+      >
         <Title>Ok</Title>
       </Button>
       <Image source={logo} />

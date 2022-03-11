@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 import React from "react";
 import { Image, Text } from "react-native";
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, FontAwesome5 } from "@expo/vector-icons";
 import theme from "../../global/styles/theme";
 import negociosPng from "../../assets/NEGOCIOS.png";
 
@@ -22,7 +22,7 @@ interface Props {
   oficio: string;
   imageOfice: string;
   pres: () => void;
-  icon: "necociar" | "indicar";
+  icon: "necociar" | "indicar" | "b2b";
 }
 
 export function MembrosComponents({
@@ -36,6 +36,7 @@ export function MembrosComponents({
   return (
     <Container>
       <Box
+        onPress={pres}
         style={{
           shadowColor: "#000",
           shadowOffset: {
@@ -66,7 +67,7 @@ export function MembrosComponents({
           </Text>
         </BoxText>
 
-        <ContainerIcon onPress={pres}>
+        <ContainerIcon>
           {icon === "necociar" && (
             <>
               <Image
@@ -82,6 +83,12 @@ export function MembrosComponents({
           {icon === "indicar" && (
             <>
               <AntDesign size={40} name="swap" color={theme.colors.focus} />
+            </>
+          )}
+
+          {icon === "b2b" && (
+            <>
+              <FontAwesome5 name="users" size={40} color={theme.colors.focus} />
             </>
           )}
         </ContainerIcon>
