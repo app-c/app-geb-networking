@@ -6,11 +6,7 @@
 import { AntDesign, Feather } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { FormHandles } from "@unform/core";
-import {
-  launchImageLibraryAsync,
-  MediaTypeOptions,
-  requestMediaLibraryPermissionsAsync,
-} from "expo-image-picker";
+
 import React, {
   useCallback,
   useEffect,
@@ -32,7 +28,7 @@ import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
 
 import { Modalize } from "react-native-modalize";
 import { Form } from "@unform/mobile";
-import buckt, {
+import {
   getDownloadURL,
   getStorage,
   ref,
@@ -46,6 +42,7 @@ import storage, {
   getFirestore,
   updateDoc,
 } from "firebase/firestore";
+import * as ImagePiker from "expo-image-picker";
 import theme from "../../global/styles/theme";
 import { useAuth } from "../../hooks/AuthContext";
 import {
@@ -131,6 +128,7 @@ export function Profile() {
   const [modal, setModal] = useState(false);
 
   const db = getFirestore();
+  const dbStorage = getStorage();
   const colectUsers = collection(db, "users");
 
   const handleModalOpenRamo = useCallback(() => {
@@ -163,6 +161,84 @@ export function Profile() {
 
   const wh = "https://api.whatsapp.com/send?phone=5514998377446";
 
+  useEffect(() => {
+    setEmail(user.email);
+    setWhats(user.whats);
+    setWorkName(user.workName);
+    setCnpj(String(user.CNPJ));
+    setCpf(String(user.CPF));
+    setLinkW(user.links[0] ? user.links[0] : "");
+    setLinkF(user.links[1] ? user.links[1] : "");
+    setLinkI(user.links[2] ? user.links[2] : "");
+    setLinkMaps(user.links[3] ? user.links[3] : "");
+  }, [user.CNPJ, user.CPF, user.email, user.links, user.whats, user.workName]);
+
+  const handleImagePiker = useCallback(async () => {
+    setLoading(true);
+    const permissionResult =
+      await ImagePiker.requestMediaLibraryPermissionsAsync();
+
+    if (permissionResult.granted === false) {
+      alert("Permission to access camera roll is required!");
+      return;
+    }
+
+    const result = await ImagePiker.launchImageLibraryAsync({
+      mediaTypes: ImagePiker.MediaTypeOptions.All,
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (result.cancelled) {
+      setLoading(false);
+    }
+
+    if (!result.cancelled) {
+      const img = result.uri;
+      const data = new FormData();
+      data.append("avatar", {
+        type: "image/jpg",
+        name: `${user.id}.jpg`,
+        uri: img,
+      });
+      await api.patch("user/avatar", data).then(h => {
+        setAvatarUrl(h.data);
+        setLoading(false);
+      });
+    }
+  }, [user.id]);
+
+  const handleLogo = useCallback(async () => {
+    setLoading(true);
+    const { status } = await ImagePiker.requestMediaLibraryPermissionsAsync();
+
+    // alert("Permission to access camera roll is required!");
+    if (status === "granted") {
+      const result = await ImagePiker.launchImageLibraryAsync({
+        mediaTypes: ImagePiker.MediaTypeOptions.All,
+        allowsEditing: true,
+        aspect: [4, 4],
+        quality: 1,
+      });
+
+      if (!result.cancelled) {
+        const img = result.uri;
+        const data = new FormData();
+        data.append("logo", {
+          type: "image/jpg",
+          name: `${user.id}.jpg`,
+          uri: img,
+        });
+        await api.patch("user/logo", data).then(h => {
+          setLogorUrl(h.data);
+          setLoading(false);
+        });
+      }
+    }
+
+    setLoading(false);
+  }, []);
+
   const handleSubmit = useCallback(async () => {
     formRef.current?.setErrors({});
 
@@ -182,33 +258,7 @@ export function Profile() {
       avatarUrl,
       logoUrl,
     };
-    const data = new FormData();
-    const fileName = new Date().getTime();
 
-    const obj = {
-      type: "image/jpeg",
-      name: `${fileName}.jpeg`,
-      uri,
-    };
-
-    data.append("avatar", {
-      type: uri.type,
-      name: `${user.id}.jpg`,
-      uri: uri.uri,
-    });
-
-    console.log(data);
-
-    // await fetch("http://dev.app-com.digital:3333/user/avatar", {
-    //   method: "post",
-    //   headers: {
-    //     "Content-Type": "multipart/form-data",
-    //   },
-    //   body: ,
-    // }).then(h => console.log(h));
-
-    // const url = await reference.getDownloadURL();
-    // setAvatarUrl(url);
     const ref = doc(colectUsers, user.id);
 
     updateDoc(ref, {
@@ -236,14 +286,17 @@ export function Profile() {
     CPF,
     avatarUrl,
     cnpj,
+    colectUsers,
     email,
     enquadramento,
     linkF,
     linkI,
     linkMaps,
     logoUrl,
+    navigate,
     nome,
     ramo,
+    updateUser,
     uri,
     user.adm,
     user.id,
@@ -252,107 +305,40 @@ export function Profile() {
     workName,
   ]);
 
-  useEffect(() => {
-    setEmail(user.email);
-    setWhats(user.whats);
-    setWorkName(user.workName);
-    setCnpj(String(user.CNPJ));
-    setCpf(String(user.CPF));
-    setLinkW(user.links[0] ? user.links[0] : "");
-    setLinkF(user.links[1] ? user.links[1] : "");
-    setLinkI(user.links[2] ? user.links[2] : "");
-    setLinkMaps(user.links[3] ? user.links[3] : "");
-  }, [user.CNPJ, user.CPF, user.email, user.links, user.whats, user.workName]);
-
-  const handleImagePiker = useCallback(async () => {
-    setLoading(true);
-    const img = "";
-    const { status } = await requestMediaLibraryPermissionsAsync();
-
-    // alert("Permission to access camera roll is required!");
-    if (status === "granted") {
-      const result = await launchImageLibraryAsync({
-        mediaTypes: MediaTypeOptions.All,
-        allowsEditing: true,
-        aspect: [4, 4],
-        quality: 1,
-      });
-
-      if (!result.cancelled) {
-        setUri(result);
-
-        // const reference = ref(db, `/avatar/${fileName}.png`).put(result.uri);
-
-        // await uploadBytesResumable(reference, result.uri);
-        // const res = await getDownloadURL(reference);
-      }
-    }
-
-    setLoading(false);
-  }, []);
-
-  const handleLogo = useCallback(async () => {
-    setLoading(true);
-    const { status } = await requestMediaLibraryPermissionsAsync();
-
-    // alert("Permission to access camera roll is required!");
-    if (status === "granted") {
-      const result = await launchImageLibraryAsync({
-        mediaTypes: MediaTypeOptions.All,
-        allowsEditing: true,
-        aspect: [4, 4],
-        quality: 1,
-      });
-
-      if (!result.cancelled) {
-        const fileName = new Date().getTime();
-        const reference = buckt().ref(`/avatar/${fileName}.png`);
-
-        await reference
-          .putFile(result.uri)
-          .then(() => Alert.alert("Logo atualizado com sucesso"));
-
-        const res = await reference.getDownloadURL();
-
-        setLogorUrl(res);
-      }
-    }
-
-    setLoading(false);
-  }, []);
-
   return (
     <Container>
-      {/* <Modal transparent visible={loading}>
-                <Loading />
-            </Modal> */}
-
       <Modalize ref={modalizeRefRamo} snapPoint={530}>
         <ToglleRamo selectItem={(item: string) => SelectItemRamo(item)} />
       </Modalize>
+
       <Modalize ref={modalizeRefEnquadramento} snapPoint={530}>
         <ToglleEnquadramento
           selectItem={(item: string) => SelectItemEnquadramento(item)}
         />
       </Modalize>
       <HeaderContaponent type="tipo1" title="MEU PERFIL" onMessage="of" />
-      <Box />
 
       <View
         style={{
           height: RFPercentage(80),
-          top: RFPercentage(-15.5),
         }}
       >
         <ScrollView
           contentContainerStyle={{
-            paddingTop: RFValue(110),
-            paddingBottom: RFValue(10),
+            paddingTop: RFValue(10),
+            paddingBottom: RFValue(30),
           }}
         >
-          <BoxCamera onPress={handleImagePiker}>
-            <Camera name="camera" />
-          </BoxCamera>
+          <Box>
+            <Avatar
+              style={{ resizeMode: "cover" }}
+              source={{ uri: avatarUrl }}
+            />
+            <BoxCamera onPress={handleImagePiker}>
+              <Camera name="camera" />
+            </BoxCamera>
+          </Box>
+
           <Form
             initialData={{
               nome: user.nome,
@@ -361,10 +347,6 @@ export function Profile() {
             }}
           >
             <BoxFormularios>
-              <Avatar
-                style={{ resizeMode: "cover" }}
-                source={{ uri: avatarUrl }}
-              />
               <BoxInput>
                 <TitleHeader style={{ right: 10 }}>NOME</TitleHeader>
                 <InputCasdastro
@@ -537,7 +519,6 @@ export function Profile() {
           </View>
         </ScrollView>
       </View>
-
       <BoxButton onPress={handleSubmit}>
         <TitleButton>Alterar</TitleButton>
       </BoxButton>

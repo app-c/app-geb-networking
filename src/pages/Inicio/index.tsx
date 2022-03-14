@@ -38,6 +38,7 @@ import {
   Box,
   BoxIco,
   BoxPrice,
+  ComprasText,
   Container,
   FontAwes,
   IconAnt,
@@ -49,6 +50,7 @@ import {
   Scroll,
   Title,
   TitleName,
+  TitleP,
   TitlePrice,
 } from "./styles";
 // import { registerForPushNotificationsAsync } from "../../components/Notification/Notification";
@@ -94,6 +96,12 @@ interface ProsTransaction {
   prestador_id: string;
   valor: string;
   description: string;
+  consumidor: string;
+}
+
+interface PriceProps {
+  price: string;
+  pts: number;
 }
 
 export function Inicio() {
@@ -106,7 +114,7 @@ export function Inicio() {
   const modalTransaction = useRef<Modalize>(null);
 
   const [sucess, setSucess] = useState<Propssuce[]>([]);
-  const [price, setPrice] = useState("");
+  const [price, setPrice] = useState<PriceProps>({});
   const [montante, setMontante] = useState("");
   const [montanteP, setMontanteP] = useState("");
   const [orderB2b, setOrderB2b] = useState<PropsB2b[]>([]);
@@ -199,7 +207,12 @@ export function Inicio() {
       if (orderTransaction.length > 0) {
         modalTransaction.current.open();
       }
-    }, [orderB2b.length, orderIndication.length, sucess.length]),
+    }, [
+      orderB2b.length,
+      orderIndication.length,
+      orderTransaction.length,
+      sucess.length,
+    ]),
   );
 
   const ClosedModal = useCallback(() => {
@@ -273,11 +286,27 @@ export function Inicio() {
   }, []);
 
   const handleTransaction = useCallback(
-    async (prestador_id: string, descricao: string, id: string) => {
+    async (
+      prestador_id: string,
+      consumidor: string,
+      descricao: string,
+      id: string,
+      valor: string,
+    ) => {
       addDoc(colecaoTransaction, {
         prestador_id,
         descricao,
+        type: "entrada",
         createdAt: format(new Date(Date.now()), "dd-MM-yyy-HH-mm"),
+        valor,
+      });
+
+      addDoc(colecaoTransaction, {
+        consumidor,
+        descricao,
+        type: "saida",
+        createdAt: format(new Date(Date.now()), "dd-MM-yyy-HH-mm"),
+        valor,
       });
 
       const ref = doc(colecaoOrderTransaction, id);
@@ -342,12 +371,19 @@ export function Inicio() {
         return acc + Number(item.valor);
       }, 0);
 
-      setPrice(
-        total.toLocaleString("pt-BR", {
-          style: "currency",
-          currency: "BRL",
-        }),
-      );
+      const price = total.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      });
+
+      const pts = data.length * 10;
+
+      const pricePts = {
+        price,
+        pts,
+      };
+
+      setPrice(pricePts);
     });
 
     return () => load();
@@ -355,8 +391,6 @@ export function Inicio() {
 
   const anoPass = new Date(Date.now()).getFullYear() - 1;
   const anoAtual = new Date(Date.now()).getFullYear();
-
-  console.log(orderB2b);
 
   return (
     <Container>
@@ -393,20 +427,29 @@ export function Inicio() {
 
       <TitleName> {user.nome} </TitleName>
 
-      <BoxPrice>
-        <TitlePrice>{price}</TitlePrice>
-      </BoxPrice>
+      <View style={{ alignItems: "center" }}>
+        <ComprasText>Vendas</ComprasText>
+
+        <BoxPrice>
+          <TitlePrice>{price.price}</TitlePrice>
+          <TitleP>{price.pts} pts</TitleP>
+        </BoxPrice>
+      </View>
 
       <View style={{ flexDirection: "row" }}>
-        <Text style={{ marginLeft: 16 }}>Total de negócios até {anoPass}</Text>
         <Text style={{ marginLeft: 16 }}>
+          Total de vendas do G.E.B até {anoPass}
+        </Text>
+        <Text style={{ marginLeft: 10 }}>
           {montanteP === "R$0,00" ? "R$3.242.222,78" : montanteP}
         </Text>
       </View>
 
       <View style={{ flexDirection: "row" }}>
-        <Text style={{ marginLeft: 16 }}>Total de negócios de {anoAtual}</Text>
-        <Text style={{ marginLeft: 16 }}>{montante}</Text>
+        <Text style={{ marginLeft: 16 }}>
+          Total de vendas do G.E.B de {anoAtual}
+        </Text>
+        <Text style={{ marginLeft: 14 }}>{montante}</Text>
       </View>
 
       <Modalize
@@ -571,7 +614,13 @@ export function Inicio() {
             <View key={h.id}>
               <MessageComponent
                 confirmar={() => {
-                  handleTransaction(h.prestador_id, h.description, h.id);
+                  handleTransaction(
+                    h.prestador_id,
+                    h.consumidor,
+                    h.description,
+                    h.id,
+                    h.valor,
+                  );
                 }}
                 nome={h.nome}
                 rejeitar={() => {
@@ -613,11 +662,6 @@ export function Inicio() {
           <Title>Negociar</Title>
         </Box>
 
-        <Box onPress={() => navigate.navigate("consumo")}>
-          <IConSimple name="graph" color={theme.colors.focus} />
-          <Title>Extrato de negócios</Title>
-        </Box>
-
         <Box onPress={() => navigate.navigate("indicacao")}>
           <IconAnt name="swap" color={theme.colors.focus} />
 
@@ -635,14 +679,19 @@ export function Inicio() {
           <Title>Localize os membros</Title>
         </Box>
 
-        <Box>
-          <IconFoundation name="clipboard-notes" color={theme.colors.focus} />
-          <Title>Regras do projeto</Title>
+        <Box onPress={() => navigate.navigate("consumo")}>
+          <IConSimple name="graph" color={theme.colors.focus} />
+          <Title>Extrato de negócios</Title>
         </Box>
 
         <Box onPress={() => navigate.navigate("classificaçao")}>
           <IconIoncic name="ios-podium" color={theme.colors.focus} />
           <Title>Minha classificação</Title>
+        </Box>
+
+        <Box>
+          <IconFoundation name="clipboard-notes" color={theme.colors.focus} />
+          <Title>Regras do projeto</Title>
         </Box>
 
         {user.adm && (

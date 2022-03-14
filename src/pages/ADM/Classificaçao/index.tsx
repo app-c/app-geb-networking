@@ -709,11 +709,11 @@ export function Ranking() {
           >
             <ScrollView horizontal>
               <Box type={type === "entrada"} onPress={() => setType("entrada")}>
-                <TitleType type={type === "entrada"}>COMPRAS</TitleType>
+                <TitleType type={type === "entrada"}>VENDAS</TitleType>
               </Box>
 
               <Box type={type === "saida"} onPress={() => setType("saida")}>
-                <TitleType type={type === "saida"}>VENDAS</TitleType>
+                <TitleType type={type === "saida"}>COMPRAS</TitleType>
               </Box>
 
               <Box

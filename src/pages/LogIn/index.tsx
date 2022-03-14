@@ -79,7 +79,7 @@ export function SingIn() {
           marginRight: 20,
         }}
       >
-        version: 1.1.1
+        version: 1.1.4
       </Text>
     </Container>
   );

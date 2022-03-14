@@ -6,11 +6,13 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Alert, Platform } from "react-native";
 import { RFValue } from "react-native-responsive-fontsize";
 import storage, {
+  getBytes,
   getDownloadURL,
   getStorage,
   ref,
   updateMetadata,
   uploadBytes,
+  uploadBytesResumable,
   uploadString,
 } from "firebase/storage";
 import store, { addDoc, collection, getFirestore } from "firebase/firestore";
@@ -38,6 +40,8 @@ import { useAuth } from "../../hooks/AuthContext";
 import { Loading } from "../../components/Loading";
 import { HeaderContaponent } from "../../components/HeaderComponent";
 import { colecao } from "../../collection";
+import { api } from "../../vervices/api";
+import { buck, db } from "../../config";
 
 export function Post() {
   const { navigate } = useNavigation();
@@ -47,8 +51,7 @@ export function Post() {
   const [descricao, setDescricao] = useState("");
   const [load, setLoad] = useState(false);
 
-  const buck = getStorage();
-  const db = getFirestore();
+  // const db = getFirestore();
   const colect = collection(db, colecao.post);
 
   useEffect(() => {
@@ -74,7 +77,6 @@ export function Post() {
       });
 
       if (!result.cancelled) {
-        console.log(result);
         setImage(result.uri);
       }
     }
@@ -87,29 +89,26 @@ export function Post() {
     }
     setLoad(true);
 
-    const fileName = new Date().getTime();
-    const reference = ref(buck, `/posts/${img}.png`);
+    const data = new FormData();
+    data.append("post", {
+      type: "image/jpg",
+      name: `${user.id}.jpg`,
+      uri: img,
+    });
 
-    console.log(reference.storage);
-
-    // const res = await getDownloadURL(reference);
-
-    // addDoc(colect, {
-    //   nome: user.nome,
-    //   avater: user.avatarUrl,
-    //   descricao,
-    //   post: res,
-    //   like: 0,
-    // })
-    //   .then(() => {
-    //     Alert.alert("Post", "post criado com sucesso!");
-    //     setLoad(false);
-    //   })
-    //   .catch(err => console.log(err));
-
-    setLoad(false);
-    // navigate("Home");
-  }, [descricao, img, navigate, user.avatarUrl, user.nome]);
+    await api.patch("post", data).then(h => {
+      addDoc(colect, {
+        nome: user.nome,
+        avater: user.avatarUrl,
+        descricao,
+        post: h.data,
+        like: 0,
+      });
+      setLoad(false);
+      Alert.alert("Post", "post criado com sucesso!");
+      navigate("Home");
+    });
+  }, [descricao, img, navigate, user.avatarUrl, user.id, user.nome]);
 
   return (
     <Container>
