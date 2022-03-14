@@ -26,7 +26,7 @@
         "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone",
       },
       "bundleIdentifier": "com.app-c.appGeb",
-      "buildNumber": "3"
+      "buildNumber": "5"
     }
   }
 }

@@ -24,7 +24,7 @@ import AppLoading from "expo-app-loading";
 import { ThemeProvider } from "styled-components/native";
 
 import { NavigationContainer } from "@react-navigation/native";
-import { Text, View } from "react-native";
+import { LogBox, Text, View } from "react-native";
 import theme from "./src/global/styles/theme";
 import { SingIn } from "./src/pages/LogIn";
 import AppProvider from "./src/hooks";
@@ -44,6 +44,7 @@ export default function App() {
   if (!loaded) {
     return <AppLoading />;
   }
+  LogBox.ignoreLogs([`Setting a timer for a long period`]);
 
   return (
     <NavigationContainer>
