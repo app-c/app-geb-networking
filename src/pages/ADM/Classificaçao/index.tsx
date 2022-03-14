@@ -58,6 +58,14 @@ interface IQnt {
   workName: string;
 }
 
+interface PropsB2b {
+  data: string;
+  id: string;
+  prestador_id: string;
+  user_id: string;
+  pontos: number;
+}
+
 export function Ranking() {
   const { user } = useAuth();
   const modalEntradaSaida = useRef<Modalize>(null);
@@ -69,6 +77,7 @@ export function Ranking() {
   const [findEntrada, setFindEntrada] = useState<IPropsTransaction[]>([]);
   const [extrato, setExtrato] = useState<IPropsTransaction[]>([]);
   const [extratoUser, setExtratoUser] = useState<IPropsTransaction[]>([]);
+  const [b2b, setB2b] = useState<PropsB2b[]>([]);
 
   const [qntGeral, setQntGeral] = useState<IQnt[]>([]);
   const [load, setLoad] = useState(true);
@@ -77,6 +86,7 @@ export function Ranking() {
   const colecaoUsers = collection(db, "users");
   const colecaoTransaction = collection(db, "transaction");
   const colecaoPresenca = collection(db, "presença");
+  const colecaoB2b = collection(db, "b2b");
 
   // todo entrada ...................
   useEffect(() => {
@@ -612,6 +622,58 @@ export function Ranking() {
     return data;
   }, [Users]);
 
+  // todo B2B ..............................................................
+
+  useEffect(() => {
+    const load = onSnapshot(colecaoB2b, h => {
+      const res = h.docs.map(p => {
+        return {
+          pontos: 20,
+          ...p.data(),
+        } as PropsB2b;
+      });
+
+      setB2b(res);
+    });
+
+    return () => load();
+  }, []);
+
+  const DataB2b = useMemo(() => {
+    const dataB2b = Users.map((user, i) => {
+      const filtroConsumo = b2b.filter(h => {
+        if (h.prestador_id === user.id) {
+          return h;
+        }
+      });
+
+      const pontos = filtroConsumo.reduce((acc, item) => {
+        return acc + Number(item.pontos);
+      }, 0);
+
+      return {
+        id: user.id,
+        nome: user.nome,
+        pontos,
+        workName: user.workName,
+      };
+    })
+      .sort((a, b) => {
+        if (a.nome < b.nome) {
+          return -1;
+        }
+      })
+      .sort((a, b) => Number(b.pontos) - Number(a.pontos));
+
+    return dataB2b.map((h, i) => {
+      const po = i + 1;
+      return {
+        ...h,
+        posicao: `${po}º`,
+      };
+    });
+  }, [Users, b2b]);
+
   useEffect(() => {
     setTimeout(() => {
       if (Entrada && Saida) {
@@ -647,11 +709,11 @@ export function Ranking() {
           >
             <ScrollView horizontal>
               <Box type={type === "entrada"} onPress={() => setType("entrada")}>
-                <TitleType type={type === "entrada"}>ENTRADA</TitleType>
+                <TitleType type={type === "entrada"}>COMPRAS</TitleType>
               </Box>
 
               <Box type={type === "saida"} onPress={() => setType("saida")}>
-                <TitleType type={type === "saida"}>SAÍDA</TitleType>
+                <TitleType type={type === "saida"}>VENDAS</TitleType>
               </Box>
 
               <Box
@@ -673,6 +735,10 @@ export function Ranking() {
                 onPress={() => setType("padrinho")}
               >
                 <TitleType type={type === "padrinho"}>Padrinho</TitleType>
+              </Box>
+
+              <Box type={type === "b2b"} onPress={() => setType("b2b")}>
+                <TitleType type={type === "padrinho"}>B2B</TitleType>
               </Box>
             </ScrollView>
           </View>
@@ -1013,6 +1079,69 @@ export function Ranking() {
                           }}
                         >
                           {h.position}
+                        </TitleList>
+                      </BoxClassificacao>
+                      <View
+                        style={{
+                          flex: 1,
+                          marginLeft: 20,
+                        }}
+                      >
+                        <TitleList
+                          style={{
+                            fontSize: RFValue(20),
+                            fontFamily: theme.fonts.blac,
+                          }}
+                        >
+                          {" "}
+                          {h.nome}{" "}
+                        </TitleList>
+                        <TitleList> {h.workName} </TitleList>
+                      </View>
+
+                      <View
+                        style={{
+                          alignItems: "center",
+                          flex: 1,
+                        }}
+                      >
+                        <TitleList
+                          style={{
+                            fontSize: RFValue(16),
+                            fontFamily: theme.fonts.blac,
+                            textAlign: "center",
+                          }}
+                        >
+                          Pontos
+                        </TitleList>
+                        <TitleList>{h.pontos} </TitleList>
+                      </View>
+                    </BoxLista>
+                  </View>
+                )}
+              />
+            )}
+
+            {type === "b2b" && (
+              <FlatList
+                data={DataB2b}
+                keyExtractor={h => h.id}
+                renderItem={({ item: h }) => (
+                  <View
+                    style={{
+                      paddingBottom: 20,
+                      marginTop: 10,
+                    }}
+                  >
+                    <BoxLista>
+                      <BoxClassificacao>
+                        <TitleList
+                          style={{
+                            fontSize: 26,
+                            color: theme.colors.text_secundary,
+                          }}
+                        >
+                          {h.posicao}
                         </TitleList>
                       </BoxClassificacao>
                       <View
