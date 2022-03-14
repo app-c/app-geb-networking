@@ -25,6 +25,7 @@ import {
   deleteDoc,
   doc,
   getDoc,
+  getDocs,
   getFirestore,
   onSnapshot,
   updateDoc,
@@ -145,6 +146,7 @@ export function Inicio() {
 
       setOrderIndication(order.filter(h => h.userId === user.id));
     });
+
     return () => load();
   }, []);
 
@@ -192,6 +194,9 @@ export function Inicio() {
     return () => load();
   }, []);
 
+  useEffect(() => {
+    getDocs(colecaoUsers).catch(h => console.log(h));
+  }, []);
   useFocusEffect(
     useCallback(() => {
       if (orderIndication.length > 0) {
@@ -316,7 +321,7 @@ export function Inicio() {
   );
 
   const DeleteTransaction = useCallback(async (id: string) => {
-    const ref = doc(colecao, id);
+    const ref = doc(colecaoTransaction, id);
     deleteDoc(ref).then(() => Alert.alert("Transação deletada"));
   }, []);
 
@@ -331,7 +336,8 @@ export function Inicio() {
 
       const MontatePass = res
         .filter(h => {
-          const [dia, mes, ano, hora, min] = h.createdAt.split("-").map(Number);
+          const data = h.createdAt ? h.createdAt : "00-00-00-00-00";
+          const [dia, mes, ano, hora, min] = data.split("-").map(Number);
           const DateN = new Date(Date.now()).getFullYear() - 1;
           if (h.type === "entrada" && ano === DateN) {
             return h;
@@ -343,7 +349,9 @@ export function Inicio() {
 
       const MontateAtual = res
         .filter(h => {
-          const [dia, mes, ano, hora, min] = h.createdAt.split("-").map(Number);
+          const data = h.createdAt ? h.createdAt : "00-00-00-00-00";
+
+          const [dia, mes, ano, hora, min] = data.split("-").map(Number);
           const DateN = new Date(Date.now()).getFullYear();
           if (h.type === "entrada" && ano === DateN) {
             return h;

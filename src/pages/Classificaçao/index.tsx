@@ -332,7 +332,7 @@ export function Classificaçao() {
               }}
             >
               <BoxContainer>
-                <Title>Entrada</Title>
+                <Title>VENDAS</Title>
                 <Title>{Entrada.totalPontos}pts</Title>
               </BoxContainer>
 
@@ -349,7 +349,7 @@ export function Classificaçao() {
               }}
             >
               <BoxContainer>
-                <Title>Saida</Title>
+                <Title>COMPRAS</Title>
                 <Title>{Saida.totalPontos}pts</Title>
               </BoxContainer>
 

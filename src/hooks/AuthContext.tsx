@@ -121,12 +121,14 @@ export const AuthProvider: React.FC = ({ children }) => {
               setUser(userData);
             }
           })
-          .catch(() =>
+          .catch(err => {
+            const { code } = err;
+            console.log(err);
             Alert.alert(
               "Login",
               "Não foi possível carregar os dados do usuário",
-            ),
-          );
+            );
+          });
       })
       .catch(err => {
         const { code } = err;

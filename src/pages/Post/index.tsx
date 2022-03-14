@@ -44,7 +44,7 @@ import { api } from "../../vervices/api";
 import { buck, db } from "../../config";
 
 export function Post() {
-  const { navigate } = useNavigation();
+  const { goBack } = useNavigation();
   const { user } = useAuth();
 
   const [img, setImage] = useState("of");
@@ -106,9 +106,9 @@ export function Post() {
       });
       setLoad(false);
       Alert.alert("Post", "post criado com sucesso!");
-      navigate("Home");
+      goBack();
     });
-  }, [descricao, img, navigate, user.avatarUrl, user.id, user.nome]);
+  }, [colect, descricao, goBack, img, user.avatarUrl, user.id, user.nome]);
 
   return (
     <Container>
