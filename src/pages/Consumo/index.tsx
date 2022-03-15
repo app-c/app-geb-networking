@@ -443,8 +443,11 @@ export function Consumo() {
       )}
 
       {type === "presença" && (
-        <View style={{ marginTop: 34 }}>
+        <View style={{ marginTop: 24, flex: 1 }}>
           <FlatList
+            contentContainerStyle={{
+              paddingBottom: 50,
+            }}
             data={presenca}
             keyExtractor={h => h.data}
             renderItem={({ item: h }) => (
