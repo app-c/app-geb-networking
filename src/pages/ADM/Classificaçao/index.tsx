@@ -43,7 +43,7 @@ interface IPropsTransaction {
   createdAt: string;
   descricao: string;
   prestador_id?: string;
-  consumidor_id?: string;
+  consumidor?: string;
   type: string;
   valor: string;
   ponto: number;
@@ -324,7 +324,7 @@ export function Ranking() {
 
     const dataMes = Users.map((users, i) => {
       const filtroConsumo = filterMes.filter(h => {
-        if (h.consumidor_id === users.id) {
+        if (h.consumidor === users.id) {
           return h;
         }
       });
@@ -360,7 +360,7 @@ export function Ranking() {
 
     const dataAno = Users.map((user, i) => {
       const filtroConsumo = filterAno.filter(h => {
-        if (h.consumidor_id === user.id) {
+        if (h.consumidor === user.id) {
           return h;
         }
       });
@@ -401,7 +401,7 @@ export function Ranking() {
 
     const dataTodos = Users.map((user, i) => {
       const filtroConsumo = filterAno.filter(h => {
-        if (h.consumidor_id === user.id) {
+        if (h.consumidor === user.id) {
           return h;
         }
       });
@@ -482,7 +482,7 @@ export function Ranking() {
   const Extrato = useCallback(
     (user_id: string) => {
       const re = extrato.filter(h => {
-        if (h.consumidor_id === user_id || h.prestador_id === user_id) {
+        if (h.consumidor === user_id || h.prestador_id === user_id) {
           return h;
         }
       });

@@ -38,7 +38,7 @@ interface PropsEntrada {
 interface PropsSaida {
   createdAt: string;
   descricao: string;
-  consumidor_id: string;
+  consumidor: string;
   type: string;
   valor: string;
   pontosSaida: number;
@@ -257,10 +257,11 @@ export function Classificaçao() {
     return po;
   }, [FindAllUser, findEntrada, user.id]);
 
+  console.log(findSaida.filter(h => h.consumidor === user.id));
   const Saida = useMemo(() => {
-    const data = FindAllUser.map((user, i) => {
+    const data = FindAllUser.map((users, i) => {
       const filtroConsumo = findSaida.filter(h => {
-        if (h.consumidor_id === user.id) {
+        if (h.consumidor === users.id) {
           return h;
         }
       });
@@ -279,8 +280,8 @@ export function Classificaçao() {
       });
 
       return {
-        id: user.id,
-        nome: user.nome,
+        id: users.id,
+        nome: users.nome,
         valor,
         total,
         pontos: filtroConsumo.length * 10,

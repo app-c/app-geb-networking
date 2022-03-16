@@ -36,7 +36,7 @@ import { colecao } from "../../collection";
 export interface PropTransactions {
   id: string;
   prestador_id: string;
-  consumidor_id: string;
+  consumidor: string;
   descricao: string;
   type: "entrada" | "saida";
   valor: string;
@@ -113,7 +113,7 @@ export function Consumo() {
 
   const Consumidor = useMemo(() => {
     return response.filter(h => {
-      return h.consumidor_id === user.id;
+      return h.consumidor === user.id;
     });
   }, [response, user.id]);
 
