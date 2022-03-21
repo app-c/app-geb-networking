@@ -22,4 +22,5 @@ export interface IUserDto {
   padrinhQuantity: number;
   avatarUrl: string;
   logoUrl: string;
+  inativo: boolean;
 }

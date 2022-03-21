@@ -55,6 +55,7 @@ export function B2B() {
         .map(h => {
           return h.data() as IUserDto;
         })
+        .filter(h => h.inativo === false)
         .sort((a, b) => {
           if (a.nome < b.nome) {
             return -1;
@@ -121,6 +122,8 @@ export function B2B() {
                     user_avatar={h.avatarUrl}
                     oficio={h.workName}
                     imageOfice={h.logoUrl}
+                    inativoPres={h.inativo}
+                    inativo={h.inativo}
                   />
                 </>
               )}

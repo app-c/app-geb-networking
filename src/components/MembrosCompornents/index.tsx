@@ -1,3 +1,4 @@
+/* eslint-disable react/require-default-props */
 /* eslint-disable camelcase */
 import React from "react";
 import { Image, Text } from "react-native";
@@ -22,7 +23,9 @@ interface Props {
   oficio: string;
   imageOfice: string;
   pres: () => void;
-  icon: "necociar" | "indicar" | "b2b";
+  icon?: "necociar" | "indicar" | "b2b";
+  inativo?: boolean;
+  inativoPres?: boolean;
 }
 
 export function MembrosComponents({
@@ -32,11 +35,15 @@ export function MembrosComponents({
   imageOfice,
   pres,
   icon,
+  inativo,
+  inativoPres,
 }: Props) {
   return (
     <Container>
       <Box
+        inativo={inativo}
         onPress={pres}
+        disabled={inativoPres}
         style={{
           shadowColor: "#000",
           shadowOffset: {

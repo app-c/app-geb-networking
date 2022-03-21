@@ -731,6 +731,12 @@ export function Inicio() {
               <FontAwes name="user-times" color={theme.colors.focus_second} />
               <Title>Excluir um membro</Title>
             </Box>
+
+	    <Box onPress={() => navigate.navigate("inativo")}>
+              <FontAwes name="user-times" color={theme.colors.
+focus_second} />
+              <Title>Inativar um membro</Title>
+            </Box>
           </View>
         )}
       </Scroll>

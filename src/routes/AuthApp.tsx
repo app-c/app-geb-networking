@@ -11,6 +11,7 @@ import { Profile } from "../pages/Profile";
 import { ListPresenca } from "../pages/ADM/ListaPresenca";
 import { UpdateSenhaUser } from "../pages/ADM/UpdateSenhaUser";
 import { DeletUser } from "../pages/ADM/DeleteUser";
+import {Inativo} from "../pages/ADM/Inativo"
 import { Indicaçoes } from "../pages/Indicaçes";
 import { Indication } from "../pages/Idication";
 import { TabBarApp } from "./TabBarApp";
@@ -34,6 +35,7 @@ export function AuthApp() {
       <Stak.Screen name="negociar" component={StacKMembros} />
       <Stak.Screen name="indicacao" component={Indicaçoes} />
       <Stak.Screen name="b2b" component={StacKB2b} />
+      <Stak.Screen name="inativo" component={Inativo} />
 
       <Stak.Screen name="ranking" component={Ranking} />
       <Stak.Screen name="user" component={SingUp} />

@@ -50,7 +50,14 @@ export function Indicaçoes() {
 
   useEffect(() => {
     const load = onSnapshot(colectUsers, h => {
-      const user = h.docs.map(p => p.data() as IUserDto);
+      const user = h.docs
+        .map(p => p.data() as IUserDto)
+        .filter(h => h.inativo === false)
+        .sort((a, b) => {
+          if (a.nome < b.nome) {
+            return -1;
+          }
+        });
       setUsers(user);
     });
 
@@ -140,6 +147,8 @@ export function Indicaçoes() {
             icon="indicar"
             userName={h.nome}
             pres={() => OpenModal(h.id, h.workName)}
+            inativoPres={h.inativo}
+            inativo={h.inativo}
           />
         )}
       />

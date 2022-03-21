@@ -2,6 +2,10 @@ import { RFPercentage, RFValue } from "react-native-responsive-fontsize";
 import styled from "styled-components/native";
 import theme from "../../global/styles/theme";
 
+type Props = {
+  inativo: boolean;
+};
+
 export const Container = styled.View``;
 
 export const BoxText = styled.View`
@@ -13,10 +17,11 @@ export const Title = styled.Text`
   font-size: ${RFValue(22)}px;
 `;
 
-export const Box = styled.TouchableOpacity`
+export const Box = styled.TouchableOpacity<Props>`
   flex-direction: row;
   padding: 20px;
-  background-color: ${({ theme: h }) => h.colors.primary};
+  background-color: ${({ theme: h, inativo }) =>
+    inativo ? h.colors.focus_second_light : h.colors.primary};
   margin-bottom: 10px;
 `;
 

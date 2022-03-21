@@ -93,6 +93,7 @@ export const AuthProvider: React.FC = ({ children }) => {
               logoUrl,
               indicacao,
               presenca,
+              inativo,
             } = profile.data() as IUserDto;
 
             if (profile.exists) {
@@ -113,6 +114,7 @@ export const AuthProvider: React.FC = ({ children }) => {
                 logoUrl,
                 indicacao,
                 presenca,
+                inativo,
               };
               await AsyncStorage.setItem(
                 User_Collection,
@@ -123,7 +125,6 @@ export const AuthProvider: React.FC = ({ children }) => {
           })
           .catch(err => {
             const { code } = err;
-            console.log(err);
             Alert.alert(
               "Login",
               "Não foi possível carregar os dados do usuário",
