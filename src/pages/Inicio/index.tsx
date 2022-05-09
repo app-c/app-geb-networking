@@ -416,6 +416,7 @@ export function Inicio() {
             color={theme.colors.focus_second}
           />
         </TouchableOpacity>
+
         <TouchableOpacity onPress={() => navigate.navigate("perfil")}>
           <MaterialCommunityIcons
             name="cog-outline"
@@ -732,9 +733,8 @@ export function Inicio() {
               <Title>Excluir um membro</Title>
             </Box>
 
-	    <Box onPress={() => navigate.navigate("inativo")}>
-              <FontAwes name="user-times" color={theme.colors.
-focus_second} />
+            <Box onPress={() => navigate.navigate("inativo")}>
+              <FontAwes name="user-times" color={theme.colors.focus_second} />
               <Title>Inativar um membro</Title>
             </Box>
           </View>
