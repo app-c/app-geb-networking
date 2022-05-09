@@ -22,6 +22,7 @@ import {
   requestMediaLibraryPermissionsAsync,
 } from "expo-image-picker";
 
+import { format } from "date-fns";
 import {
   Box,
   BoxAvatar,
@@ -102,6 +103,7 @@ export function Post() {
         avater: user.avatarUrl,
         descricao,
         post: h.data,
+        data: new Date(Date.now()).getTime(),
         like: 0,
       });
       setLoad(false);

@@ -26,13 +26,13 @@ export function ModalB2b({ clientName, failTransaction, handShak }: Prps) {
       </Title>
 
       <BoxButon>
-        <ButonCancel onPress={failTransaction}>
-          <TextButon>NÃO</TextButon>
-        </ButonCancel>
-
         <ButonOk onPress={handShak}>
           <TextButon>SIM</TextButon>
         </ButonOk>
+
+        <ButonCancel onPress={failTransaction}>
+          <TextButon>NÃO</TextButon>
+        </ButonCancel>
       </BoxButon>
       <View style={{ marginTop: 26 }}>
         <Line />

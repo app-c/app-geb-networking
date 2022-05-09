@@ -154,12 +154,6 @@ export function Profile() {
     setEnquadramento(item);
     modalizeRefEnquadramento.current?.close();
   }, []);
-  const w = `https://www.api.whatsapp.com/send?phone=55${user.whats.slice(
-    1,
-    3,
-  )}${user.whats.slice(5, -5)}${user.whats.slice(-4)}`;
-
-  const wh = "https://api.whatsapp.com/send?phone=5514998377446";
 
   useEffect(() => {
     setEmail(user.email);
@@ -254,7 +248,7 @@ export function Profile() {
       ramo,
       enquadramento,
       padrinhQuantity: user.padrinhQuantity,
-      links: [wh, linkF, linkI, linkMaps],
+      links: [linkF, linkI, linkMaps],
       avatarUrl,
       logoUrl,
     };
@@ -272,7 +266,7 @@ export function Profile() {
       email,
       ramo,
       enquadramento,
-      links: [wh, linkF, linkI, linkMaps],
+      links: [linkF, linkI, linkMaps],
       avatarUrl,
       logoUrl,
     })
@@ -286,7 +280,6 @@ export function Profile() {
     CPF,
     avatarUrl,
     cnpj,
-    colectUsers,
     email,
     enquadramento,
     linkF,
@@ -297,7 +290,6 @@ export function Profile() {
     nome,
     ramo,
     updateUser,
-    uri,
     user.adm,
     user.id,
     user.padrinhQuantity,
@@ -384,7 +376,10 @@ export function Profile() {
                   name="whats"
                   icon=""
                   type="cel-phone"
-                  onChangeText={h => setWhats(h)}
+                  onChangeText={(mask, unmas) => {
+                    setWhats(mask);
+                    console.log(mask);
+                  }}
                   value={whats!}
                 />
               </BoxInput>

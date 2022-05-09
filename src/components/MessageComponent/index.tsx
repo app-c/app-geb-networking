@@ -47,13 +47,13 @@ export function MessageComponent({ nome, valor, confirmar, rejeitar }: Props) {
             justifyContent: "space-between",
           }}
         >
-          <ButtonConfirmar onPress={confirmar}>
-            <TextButton>Confirmar</TextButton>
-          </ButtonConfirmar>
-
           <ButtonConcelar onPress={rejeitar}>
             <TextButton>Regeitar</TextButton>
           </ButtonConcelar>
+
+          <ButtonConfirmar onPress={confirmar}>
+            <TextButton>Confirmar</TextButton>
+          </ButtonConfirmar>
         </View>
       </ContainerMessage>
     </View>

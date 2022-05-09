@@ -41,12 +41,27 @@ export function Valide() {
   const colect = collection(db, "presença");
 
   const hanldeValidar = useCallback(async () => {
-    if (Presenca) {
-      setLoad(false);
-      return Alert.alert(
-        "Presença",
-        "você nao pode marcar presença mais de uma vez no mesmo horário",
+    if (presenca.length > 0) {
+      const pres = presenca
+        .filter(h => h.user_id === user.id)
+        .find(h => {
+          return h.presenca === false;
+        });
+
+      const compare =
+        new Date(Date.now()).getHours() === new Date(pres.createdAt).getHours();
+
+      console.log(
+        compare,
+        new Date(Date.now()).getHours(),
+        new Date(pres.createdAt).getHours(),
       );
+
+      if (compare) {
+        return Alert.alert(
+          "Vocẽ não pode marcar presença mais de uma vez no mesmo horário",
+        );
+      }
     }
     addDoc(colect, {
       user_id: user.id,
@@ -68,7 +83,9 @@ export function Valide() {
 
   useEffect(() => {
     const load = onSnapshot(colect, h => {
-      const response = h.docs.map(h => h.data() as Props);
+      const response = h.docs
+        .map(h => h.data() as Props)
+        .filter(h => h.user_id === user.id && h.presenca === false);
 
       setPresenca(response);
     });

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Alert, FlatList, Linking, View } from "react-native";
 import { Form } from "@unform/mobile";
 import { collection, getFirestore, onSnapshot } from "firebase/firestore";
+import * as Linkin from "expo-linking";
 import { FindMembroComponent } from "../../components/FindMembro";
 import { IUserDto } from "../../DtosUser";
 import { Box, Container, Flat, Title } from "./styles";
@@ -9,8 +10,10 @@ import { HeaderContaponent } from "../../components/HeaderComponent";
 import { InputCasdastro } from "../../components/InputsCadastro";
 import { colecao } from "../../collection";
 import { Loading } from "../../components/Loading";
+import { useAuth } from "../../hooks/AuthContext";
 
 export function FindUser() {
+  const { user } = useAuth();
   const [membro, setMembro] = useState<IUserDto[]>([]);
   const [value, setValue] = useState("");
   const [lista, setLista] = useState<IUserDto[]>([]);
@@ -28,6 +31,16 @@ export function FindUser() {
           if (a.nome < b.nome) {
             return -1;
           }
+        })
+        .map(h => {
+          const wa = `https://wa.me/55${h.whats.slice(1, 3)}${h.whats.slice(
+            5,
+            -5,
+          )}${h.whats.slice(-4)}`;
+          return {
+            ...h,
+            wa,
+          };
         });
       setMembro(re);
       setLoad(false);
@@ -36,16 +49,7 @@ export function FindUser() {
   }, []);
 
   const handlePress = useCallback(async (url: string) => {
-    // Checking if the link is supported for links with custom URL scheme.
-    const supported = await Linking.canOpenURL(url);
-
-    if (supported) {
-      // Opening the link with some app, if the URL scheme is "http" the web link should be opened
-      // by some browser in the mobile
-      await Linking.openURL(url);
-    } else {
-      Alert.alert(`Don't know how to open this URL: ${url}`);
-    }
+    await Linkin.openURL(url);
   }, []);
 
   useEffect(() => {
@@ -61,6 +65,8 @@ export function FindUser() {
       );
     }
   }, [membro, value]);
+
+  console.log(lista);
 
   return (
     <>
@@ -100,7 +106,7 @@ export function FindUser() {
                   whats={() => handlePress(h.links[0])}
                   face={() => handlePress(h.links[1])}
                   insta={() => handlePress(h.links[2])}
-                  maps={() => handlePress(`https://${h.links[3]}`)}
+                  maps={() => handlePress(h.wa)}
                 />
               </View>
             )}

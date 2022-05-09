@@ -28,6 +28,7 @@ export interface Res {
   like: number;
   nome: string;
   avater: string;
+  data: number;
 }
 export function Home() {
   const { user, updateUser } = useAuth();
@@ -65,12 +66,16 @@ export function Home() {
 
   useEffect(() => {
     const asy = onSnapshot(colectPost, h => {
-      const post = h.docs.map(p => {
-        return {
-          id: p.id,
-          ...p.data(),
-        } as Res;
-      });
+      const post = h.docs
+        .map(p => {
+          return {
+            id: p.id,
+            ...p.data(),
+          } as Res;
+        })
+        .sort((a, b) => {
+          return b.data - a.data;
+        });
 
       setPost(post);
       setLoad(false);

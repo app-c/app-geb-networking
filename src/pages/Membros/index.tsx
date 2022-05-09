@@ -101,8 +101,9 @@ export function Membros() {
             </Box>
           </Form>
 
-          <View style={{ paddingBottom: 350 }}>
+          <View>
             <FlatList
+              contentContainerStyle={{ paddingBottom: 570 }}
               data={lista}
               keyExtractor={h => h.id}
               renderItem={({ item: h }) => (

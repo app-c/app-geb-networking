@@ -36,6 +36,17 @@ export function SingIn() {
 
   return (
     <Container behavior="padding">
+      <Text
+        style={{
+          alignSelf: "flex-end",
+          color: theme.colors.primary_light,
+          fontSize: 12,
+          marginRight: 20,
+          top: 30,
+        }}
+      >
+        version: 1.2.1
+      </Text>
       <BoxLogo>
         <Logo source={logo} />
       </BoxLogo>
@@ -69,18 +80,6 @@ export function SingIn() {
           <Button pres={() => formRef.current?.submitForm()} title="ENTRAR" />
         </Form>
       </BoxInput>
-
-      <Text
-        style={{
-          alignSelf: "flex-end",
-          color: theme.colors.primary_light,
-          fontSize: 12,
-          top: 150,
-          marginRight: 20,
-        }}
-      >
-        version: 1.1.7
-      </Text>
     </Container>
   );
 }
